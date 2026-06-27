@@ -69,7 +69,7 @@ class TestCrayCodeAdapter:
         """CrayCodeAdapter should report full capabilities with subagents."""
         from eval_framework.adapters.cray_code import CrayCodeAdapter
         adapter = CrayCodeAdapter(
-            command="craycode",
+            command="cray",
             workspace="/tmp/eval",
             default_model="deepseek-v4-pro",
         )
@@ -81,42 +81,67 @@ class TestCrayCodeAdapter:
         assert "Read" in caps.supported_tools
         assert "Task" in caps.supported_tools
 
-    def test_parse_structured_output(self):
-        """Should parse JSON Lines tool call output."""
+    def test_build_command(self):
+        """Should build correct cray CLI command with --input flag."""
         from eval_framework.adapters.cray_code import CrayCodeAdapter
-        adapter = CrayCodeAdapter(structured_output=True)
+        from eval_framework.adapters.base import TestContext
+        from eval_framework.models import Layer, Dimension
 
-        stdout = (
-            '{"type":"tool_call","tool":"Read","params":{"file_path":"/a.py"},"result":{"content":"x=1"},"ts":"2026-07-01T10:00:00Z","duration_ms":100}\n'
-            '{"type":"tool_call","tool":"Edit","params":{"file_path":"/a.py","old_string":"x=1","new_string":"x=2"},"result":{"success":true},"ts":"2026-07-01T10:00:01Z","duration_ms":200}\n'
-            "The file has been updated successfully.\n"
+        adapter = CrayCodeAdapter(
+            command="cray",
+            default_model="deepseek-v4-pro",
         )
-        steps = adapter._parse_structured(stdout)
-        assert len(steps) == 2
-        assert steps[0].tool_call.tool_name == "Read"
-        assert steps[0].tool_call.params["file_path"] == "/a.py"
-        assert steps[0].duration_ms == 100
-        assert steps[1].tool_call.tool_name == "Edit"
-        assert steps[1].duration_ms == 200
+        ctx = TestContext(
+            test_item_id="L1-TEST",
+            layer=Layer.L1,
+            dimensions=[Dimension.D1],
+            working_dir="/tmp/eval",
+        )
+        cmd = adapter._build_command('say hello', ctx)
+        assert "--input" in cmd
+        assert "say hello" in cmd
+        assert '-d' in cmd or '--dir' in cmd
+        assert '-m "deepseek-v4-pro"' in cmd
+        assert "-v" in cmd
 
     def test_parse_verbose_output(self):
-        """Should parse human-readable tool call patterns."""
+        """Should parse cray permission lines for tool calls."""
         from eval_framework.adapters.cray_code import CrayCodeAdapter
-        adapter = CrayCodeAdapter(structured_output=False)
+        adapter = CrayCodeAdapter()
 
         stdout = (
-            "Reading file /src/main.py...\n"
-            "Found 3 TODO items.\n"
-            "Running command: pytest tests/ -v\n"
-            "All tests passed.\n"
-            "Dispatching subagent: fix the bug in utils.py\n"
+            "[Cray] Initializing Cray Code...\n"
+            '[Cray] [Turn 1] deepseek/deepseek-v4-flash\n'
+            '  └── Thought: I need to read the file...\n'
+            '[Cray] [Permission] Headless auto-approve: allowing "read"\n'
+            '[Cray] [Turn 2] deepseek/deepseek-v4-flash\n'
+            '  └── Thought: Now I should run the tests.\n'
+            '  └── Running tools...\n'
+            '[Cray] [Permission] Headless auto-approve: allowing "bash"\n'
+            "All tests passed!\n"
         )
-        steps = adapter._parse_verbose(stdout, "")
-        assert len(steps) >= 3
-        tool_names = [s.tool_call.tool_name for s in steps]
-        assert "Read" in tool_names
-        assert "Bash" in tool_names
-        assert "Task" in tool_names
+        steps = adapter._parse_verbose(stdout)
+        assert len(steps) == 2
+        assert steps[0].tool_call.tool_name == "Read"
+        assert steps[1].tool_call.tool_name == "Bash"
+
+    def test_extract_final_output(self):
+        """Should extract only the agent's final response, not framework lines."""
+        from eval_framework.adapters.cray_code import CrayCodeAdapter
+        adapter = CrayCodeAdapter()
+
+        stdout = (
+            "[Cray] Initializing Cray Code...\n"
+            '[Cray] [Turn 1] deepseek/deepseek-v4-flash\n'
+            '  └── Thought: Let me implement this...\n'
+            '[Cray] [Permission] Headless auto-approve: allowing "write"\n'
+            "The function has been implemented.\n"
+            "All edge cases are handled.\n"
+            "[Cray] [Turn 2] deepseek/deepseek-v4-flash\n"
+        )
+        result = adapter._extract_final_output(stdout)
+        assert "function has been implemented" in result
+        assert "[Cray]" not in result
 
 
 class TestTestContext:

@@ -1,16 +1,15 @@
-"""CrayCode adapter — drives CrayCode via CLI with trace parsing.
+"""CrayCode adapter — drives Cray via CLI with trace parsing.
 
-CrayCode is an AI coding agent that can be invoked via CLI.
-This adapter captures full tool-call traces by parsing CrayCode's
-structured output or verbose log format.
+Cray is the AI coding agent CLI. This adapter invokes `cray --input <prompt>`
+in non-interactive mode and parses the output to capture tool-call traces.
 """
 
 import json
+import os
 import re
 import subprocess
 import time
 from datetime import datetime, timezone
-from pathlib import Path
 from typing import Optional
 
 from eval_framework.adapters.base import AgentAdapter, TestContext
@@ -18,44 +17,43 @@ from eval_framework.models import AgentCapabilities, AgentTrace, ToolCall, ToolC
 
 
 class CrayCodeAdapter(AgentAdapter):
-    """Adapter for CrayCode AI coding agent.
+    """Adapter for the Cray AI coding agent.
 
-    Drives CrayCode via CLI, capturing structured JSON traces when available,
-    falling back to parsing verbose text output for tool calls.
+    Drives Cray via CLI in non-interactive mode (`cray --input <prompt>`),
+    parsing verbose output (-v) to extract tool-call steps.
 
-    Supports two modes:
-      - structured: CrayCode outputs JSON Lines of tool calls
-      - verbose: Parse human-readable logs for tool call patterns
+    Cray CLI reference:
+      cray [options] [prompt]           → interactive mode
+      cray --input <text> [options]     → non-interactive, send msg and exit
+      Options: -m <model>, -d <dir>, -v (verbose), --max-turns <n>, -p <mode>
     """
 
-    # Known CrayCode tool name patterns in verbose output
-    TOOL_PATTERNS = {
-        "Read": r"Reading\s+(?:file\s+)?(.+)",
-        "Write": r"Writing\s+(?:file\s+)?(.+)",
-        "Edit": r"Editing\s+(?:file\s+)?(.+)",
-        "Bash": r"(?:Running|Executing)\s+command:\s*(.+)",
-        "Grep": r"Searching\s+for\s+(.+?)\s+in\s+(.+)",
-        "Glob": r"Finding\s+files\s+matching\s+(.+)",
-        "Task": r"Dispatching\s+subagent:\s*(.+)",
-    }
+    # Patterns for parsing cray -v output
+    # cray shows: [Cray] [Permission] Headless auto-approve: allowing "tool_name"
+    TOOL_ALLOW_PATTERN = re.compile(
+        r'\[Cray\]\s*\[Permission\].*allowing\s+"(\w+)"', re.IGNORECASE
+    )
+
+    # Turn header: [Cray] [Turn N] model_name
+    TURN_PATTERN = re.compile(
+        r'\[Cray\]\s*\[Turn\s+(\d+)\]\s+(\S+)'
+    )
 
     def __init__(
         self,
         command: str = "cray",
         workspace: str = "",
         default_model: str = "deepseek-v4-pro",
-        api_key: Optional[str] = None,
-        system_prompt: Optional[str] = None,
-        structured_output: bool = True,
+        max_turns: int = 50,
+        permission_mode: str = "default",
         agent_name: str = "craycode",
         agent_version: str = "1.0",
     ):
         self._command = command
         self._workspace = workspace
         self._default_model = default_model
-        self._api_key = api_key
-        self._system_prompt = system_prompt
-        self._structured_output = structured_output
+        self._max_turns = max_turns
+        self._permission_mode = permission_mode
         self._agent_name = agent_name
         self._agent_version = agent_version
 
@@ -63,20 +61,19 @@ class CrayCodeAdapter(AgentAdapter):
         run_id = f"run-{context.test_item_id}-{int(time.time())}"
         start = datetime.now(timezone.utc)
 
-        # Build CrayCode CLI args
-        cmd = self._build_command(context)
+        # Build shell command string
+        cmd = self._build_command(prompt, context)
 
         try:
             proc = subprocess.run(
                 cmd,
-                input=prompt,
                 capture_output=True,
                 text=True,
+                shell=True,
                 cwd=context.working_dir,
                 timeout=context.layer_timeout_seconds(),
             )
         except subprocess.TimeoutExpired:
-            # Return partial trace for timeout
             return AgentTrace(
                 run_id=run_id,
                 agent_name=self._agent_name,
@@ -89,15 +86,13 @@ class CrayCodeAdapter(AgentAdapter):
             )
 
         end = datetime.now(timezone.utc)
+        output = proc.stdout + "\n" + proc.stderr
 
-        # Parse tool calls from output
-        if self._structured_output:
-            steps = self._parse_structured(proc.stdout)
-        else:
-            steps = self._parse_verbose(proc.stdout, proc.stderr)
+        # Parse tool calls from verbose output
+        steps = self._parse_verbose(output)
 
-        # Extract final output (non-tool content after last tool call)
-        final_output = self._extract_final_output(proc.stdout)
+        # The final output is everything after the last tool call line
+        final_output = self._extract_final_output(output)
 
         return AgentTrace(
             run_id=run_id,
@@ -116,136 +111,82 @@ class CrayCodeAdapter(AgentAdapter):
             agent_version=self._agent_version,
             supported_tools=[
                 "Read", "Write", "Edit", "Bash", "Grep", "Glob",
-                "Task", "WebSearch", "WebFetch",
+                "Task", "Agent", "WebSearch", "WebFetch",
             ],
             uses_subagents=True,
             has_memory_across_sessions=True,
             default_model=self._default_model,
         )
 
-    def _build_command(self, context: TestContext) -> list[str]:
-        """Build the CrayCode CLI command with appropriate flags."""
-        cmd = [self._command]
+    def _build_command(self, prompt: str, context: TestContext) -> str:
+        """Build Cray CLI command: cray --input "<prompt>" -d <dir> -m <model> -v"""
+        # Escape prompt for shell — replace " with \"
+        escaped_prompt = prompt.replace('"', '\\"').replace('\n', '\\n')
 
-        if self._structured_output:
-            cmd.append("--output-format")
-            cmd.append("json")
+        parts = [
+            self._command,
+            f'--input "{escaped_prompt}"',
+        ]
 
-        if self._api_key:
-            cmd.append("--api-key")
-            cmd.append(self._api_key)
+        dir_path = context.working_dir or self._workspace
+        if dir_path:
+            parts.append(f'-d "{dir_path}"')
 
-        if self._system_prompt:
-            cmd.append("--system-prompt")
-            cmd.append(self._system_prompt)
+        if self._default_model:
+            parts.append(f'-m "{self._default_model}"')
 
-        if self._workspace:
-            cmd.append("--workspace")
-            cmd.append(self._workspace)
+        if self._max_turns:
+            parts.append(f"--max-turns {self._max_turns}")
 
-        cmd.append("--no-interactive")  # headless mode
+        if self._permission_mode:
+            parts.append(f'-p {self._permission_mode}')
 
-        return cmd
+        # Verbose mode for trace parsing
+        parts.append("-v")
 
-    def _parse_structured(self, stdout: str) -> list[ToolCallStep]:
-        """Parse JSON Lines tool call output from CrayCode.
+        return " ".join(parts)
 
-        Expected format (one JSON object per line for tool calls):
-          {"type":"tool_call","tool":"Read","params":{"file_path":"/x.py"},"result":{...},"ts":"...","duration_ms":150}
+    def _parse_verbose(self, output: str) -> list[ToolCallStep]:
+        """Parse cray -v output for tool calls.
+
+        cray outputs:
+          [Cray] [Permission] Headless auto-approve: allowing "bash"
+          [Cray] [Permission] Headless auto-approve: allowing "read"
+          [Cray] [Turn 1] deepseek/deepseek-v4-flash
         """
         steps: list[ToolCallStep] = []
-        for line in stdout.strip().split("\n"):
-            line = line.strip()
-            if not line:
-                continue
-            try:
-                obj = json.loads(line)
-            except json.JSONDecodeError:
-                continue
+        now = datetime.now(timezone.utc)
 
-            if obj.get("type") == "tool_call":
-                ts = obj.get("ts")
-                timestamp = (
-                    datetime.fromisoformat(ts.replace("Z", "+00:00"))
-                    if ts
-                    else datetime.now(timezone.utc)
-                )
+        for line in output.split("\n"):
+            m = self.TOOL_ALLOW_PATTERN.search(line)
+            if m:
+                tool_name = m.group(1).capitalize()
                 steps.append(
                     ToolCallStep(
                         step_index=len(steps),
                         tool_call=ToolCall(
-                            tool_name=obj["tool"],
-                            params=obj.get("params", {}),
+                            tool_name=tool_name,
+                            params={},
                         ),
-                        result=obj.get("result", {}),
-                        timestamp=timestamp,
-                        duration_ms=obj.get("duration_ms", 0),
+                        result={},
+                        timestamp=now,
+                        duration_ms=0,
                     )
                 )
         return steps
 
-    def _parse_verbose(
-        self, stdout: str, stderr: str
-    ) -> list[ToolCallStep]:
-        """Parse human-readable CrayCode output for tool call patterns."""
-        combined = stdout + "\n" + stderr
-        steps: list[ToolCallStep] = []
-        now = datetime.now(timezone.utc)
-
-        for line in combined.split("\n"):
-            for tool_name, pattern in self.TOOL_PATTERNS.items():
-                m = re.search(pattern, line, re.IGNORECASE)
-                if m:
-                    params = self._extract_params(tool_name, m)
-                    steps.append(
-                        ToolCallStep(
-                            step_index=len(steps),
-                            tool_call=ToolCall(
-                                tool_name=tool_name,
-                                params=params,
-                            ),
-                            result={},
-                            timestamp=now,
-                            duration_ms=0,
-                        )
-                    )
-                    break
-        return steps
-
     @staticmethod
-    def _extract_params(tool_name: str, match: re.Match) -> dict:
-        """Extract tool parameters from a regex match group."""
-        if tool_name in ("Read", "Write", "Edit"):
-            return {"file_path": match.group(1).strip()}
-        elif tool_name == "Bash":
-            return {"command": match.group(1).strip()}
-        elif tool_name == "Grep":
-            return {"pattern": match.group(1).strip(), "path": match.group(2).strip()}
-        elif tool_name == "Glob":
-            return {"pattern": match.group(1).strip()}
-        elif tool_name == "Task":
-            return {"prompt": match.group(1).strip()}
-        return {}
-
-    @staticmethod
-    def _extract_final_output(stdout: str) -> str:
-        """Extract the final message after all tool calls."""
-        lines = stdout.strip().split("\n")
-        # Walk backwards to find the last non-tool, non-JSON line
+    def _extract_final_output(output: str) -> str:
+        """Extract the final agent message after all tool calls."""
+        lines = output.strip().split("\n")
+        # Walk backwards to find the last substantive output line
         final_lines = []
         for line in reversed(lines):
-            line = line.strip()
-            if not line:
-                continue
-            try:
-                obj = json.loads(line)
-                if obj.get("type") == "tool_call":
-                    break  # Stop at last tool call
-            except json.JSONDecodeError:
-                final_lines.append(line)
-            else:
-                # JSON but not a tool call — could be final output
-                if "final" in obj or "result" in obj:
-                    final_lines.append(line)
+            stripped = line.strip()
+            # Skip cray framework lines
+            if not stripped or stripped.startswith("[Cray]"):
+                if final_lines:
                     break
+                continue
+            final_lines.append(stripped)
         return "\n".join(reversed(final_lines))
