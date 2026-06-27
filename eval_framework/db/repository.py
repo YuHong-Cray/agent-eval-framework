@@ -140,10 +140,10 @@ class EvalRepository:
         for dim, avg_l1, avg_judge, count in q.all():
             result[dim] = {
                 "avg_l1_score": round(float(avg_l1), 3)
-                if avg_l1
+                if avg_l1 is not None
                 else None,
                 "avg_judge_score": round(float(avg_judge), 1)
-                if avg_judge
+                if avg_judge is not None
                 else None,
                 "run_count": count,
             }

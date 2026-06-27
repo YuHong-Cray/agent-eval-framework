@@ -140,12 +140,20 @@ class Scheduler:
 
                 # Persist (each thread has its own session)
                 repo.save_run(trace)
+
+                # Build a map of dimension → judge_score from judge_score_cards
+                judge_map = {}
+                if result.judge_score_cards:
+                    for card in result.judge_score_cards:
+                        judge_map[card.dimension.value] = card.score
+
                 for dim in result.dimensions:
                     repo.save_result(
                         run_id=result.run_id,
                         test_item_id=result.test_item_id,
                         dimension=dim.value,
                         l1_score=result.l1_score,
+                        judge_score=judge_map.get(dim.value),
                     )
 
                 return result
