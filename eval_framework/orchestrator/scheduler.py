@@ -1,21 +1,26 @@
-"""Test execution scheduler with concurrency control."""
+"""Test execution scheduler with concurrency control.
+
+Each _run_single_item creates a fresh DB session so that concurrent
+L1 execution via ThreadPoolExecutor works with SQLite.
+"""
 
 import concurrent.futures
 import tempfile
 import time
-import traceback
+import uuid
 from pathlib import Path
 from typing import Optional
 
 from eval_framework.adapters.base import AgentAdapter, TestContext
 from eval_framework.config import config
+from eval_framework.db.connection import get_session
+from eval_framework.db.repository import EvalRepository
 from eval_framework.models import Layer, TestItem, TestResult
 from eval_framework.orchestrator.context import ContextPreparer, TestItemRegistry
 from eval_framework.orchestrator.tracer import TraceCollector
 from eval_framework.sandbox.manager import SandboxManager
 from eval_framework.scoring.l1_runner import L1Scorer
 from eval_framework.scoring.l2_l3_judge import L2L3Judge
-from eval_framework.db.repository import EvalRepository
 
 
 class Scheduler:
@@ -24,18 +29,23 @@ class Scheduler:
     def __init__(
         self,
         adapter: AgentAdapter,
-        repository: EvalRepository,
+        repository: Optional[EvalRepository] = None,
         registry: Optional[TestItemRegistry] = None,
         sandbox: Optional[SandboxManager] = None,
         judge: Optional[L2L3Judge] = None,
     ):
         self._adapter = adapter
-        self._repository = repository
+        # repository arg kept for backward compat, but unused —
+        # each _run_single_item creates its own session
         self._registry = registry or TestItemRegistry()
-        self._sandbox = sandbox  # lazy init, may be None if Docker unavailable
+        self._sandbox = sandbox
         self._judge = judge or L2L3Judge()
         self._scorer = L1Scorer()
         self._preparer = ContextPreparer(self._registry)
+
+    def _get_repo(self) -> EvalRepository:
+        """Fresh session+repo per thread (SQLite requires this)."""
+        return EvalRepository(get_session())
 
     def run_layer(
         self,
@@ -91,14 +101,15 @@ class Scheduler:
         return results
 
     def _run_single_item(self, item: TestItem) -> TestResult:
-        """Execute one test item: sandbox → inject → run → score."""
+        """Execute one test item: prepare → run → score → persist."""
         caps = self._adapter.capabilities()
         collector = TraceCollector(
-            run_id=f"run-{item.id}-{int(time.time())}",
+            run_id=f"run-{item.id}-{uuid.uuid4().hex[:8]}",
             agent_name=caps.agent_name,
             agent_version=caps.agent_version,
             test_item_id=item.id,
         )
+        repo = self._get_repo()
 
         try:
             with tempfile.TemporaryDirectory() as tmp_dir:
@@ -127,10 +138,10 @@ class Scheduler:
                         self._collect_deliverables(item, workspace),
                     )
 
-                # Persist
-                self._repository.save_run(trace)
+                # Persist (each thread has its own session)
+                repo.save_run(trace)
                 for dim in result.dimensions:
-                    self._repository.save_result(
+                    repo.save_result(
                         run_id=result.run_id,
                         test_item_id=result.test_item_id,
                         dimension=dim.value,
@@ -142,7 +153,7 @@ class Scheduler:
         except Exception as e:
             trace = collector.finish(f"Error: {e}")
             try:
-                self._repository.save_run(trace)
+                repo.save_run(trace)
             except Exception:
                 pass
             return TestResult(

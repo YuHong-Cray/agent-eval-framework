@@ -108,4 +108,6 @@ def test_scheduler_instantiation():
 
     scheduler = Scheduler(adapter=adapter, repository=repo)
     assert scheduler._adapter is adapter
-    assert scheduler._repository is repo
+    # Session is created per-thread now; verify we can get one
+    r = scheduler._get_repo()
+    assert r is not None
