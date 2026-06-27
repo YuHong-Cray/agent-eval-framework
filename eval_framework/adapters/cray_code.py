@@ -41,7 +41,7 @@ class CrayCodeAdapter(AgentAdapter):
 
     def __init__(
         self,
-        command: str = "craycode",
+        command: str = "cray",
         workspace: str = "",
         default_model: str = "deepseek-v4-pro",
         api_key: Optional[str] = None,
