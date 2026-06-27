@@ -40,7 +40,7 @@ class Scheduler:
         self._registry = registry or TestItemRegistry()
         self._sandbox = sandbox
         self._judge = judge or L2L3Judge()
-        self._scorer = L1Scorer()
+        self._scorer = L1Scorer(judge=self._judge)
         self._preparer = ContextPreparer(self._registry)
 
     def _get_repo(self) -> EvalRepository:

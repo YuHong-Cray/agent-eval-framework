@@ -193,7 +193,7 @@ for agent in agents:
         cnt = s['runs_by_layer'].get(layer, 0)
         print(f'    {layer}: {cnt} runs')
     for dim, d in sorted(s['scores'].items()):
-        score = d.get('avg_l1_score') or d.get('avg_judge_score') or 0
+        score = d.get('combined_score', 0)
         print(f'    {dim}: {score:.3f}')
 " 2>&1
 

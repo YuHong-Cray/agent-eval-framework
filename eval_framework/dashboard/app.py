@@ -72,14 +72,11 @@ def _build_dimension_df(agents: list[str]) -> pd.DataFrame:
         scores = repo.get_agent_scores(agent)
         if scores:
             for dim, data in scores.items():
-                score = data.get("avg_judge_score") or data.get(
-                    "avg_l1_score", 0
-                )
                 rows.append(
                     {
                         "agent": agent,
                         "dimension": dim,
-                        "score": score,
+                        "score": data.get("combined_score", 0.0),
                         "runs": data.get("run_count", 0),
                     }
                 )
@@ -102,10 +99,8 @@ with tab1:
             for agent in selected_agents:
                 agent_scores = repo.get_agent_scores(agent)
                 for dim, data in agent_scores.items():
-                    val = data.get("avg_judge_score") or data.get(
-                        "avg_l1_score", 0
-                    )
-                    scores[f"{agent}_{dim}"] = val
+                    # Radar expects 0-5 scale — combined_score is 0-1, scale up
+                    scores[f"{agent}_{dim}"] = data.get("combined_score", 0.0) * 5.0
             if scores:
                 fig = radar_chart(
                     scores,

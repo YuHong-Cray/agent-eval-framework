@@ -123,15 +123,17 @@ def report(agent: str, output: str):
     if scores:
         lines.append("## Dimension Scores\n\n")
         lines.append(
-            "| Dimension | Avg L1 Score | Avg Judge Score | Runs |\n"
+            "| Dimension | Combined | L1 Score | Judge (1-5) | Runs |\n"
         )
         lines.append(
-            "|-----------|-------------|-----------------|------|\n"
+            "|-----------|----------|----------|-------------|------|\n"
         )
         for dim, data in sorted(scores.items()):
+            score = f"{data['combined_score']:.3f}"
+            l1 = f"{data['avg_l1_score']:.3f}" if data['avg_l1_score'] is not None else '—'
+            judge = f"{data['avg_judge_score']:.1f}" if data['avg_judge_score'] is not None else '—'
             lines.append(
-                f"| {dim} | {data['avg_l1_score'] or 'N/A'} | "
-                f"{data['avg_judge_score'] or 'N/A'} | "
+                f"| {dim} | {score} | {l1} | {judge} | "
                 f"{data['run_count']} |\n"
             )
     else:

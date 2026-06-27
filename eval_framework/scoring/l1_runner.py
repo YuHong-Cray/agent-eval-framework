@@ -1,4 +1,9 @@
-"""L1 scoring coordinator — dispatches to appropriate scorer by type."""
+"""L1 scoring coordinator — dispatches to appropriate scorer by type.
+
+For tree_sim / tool_match / llm_judge items (D2, D3, D5 review),
+uses the LLM-as-Judge if available, since non-interactive agents
+don't produce the structured outputs these scoring types expect.
+"""
 
 from eval_framework.models import (
     AgentTrace,
@@ -14,6 +19,9 @@ from eval_framework.scoring.tree_similarity import TreeSimilarity
 class L1Scorer:
     """Coordinates L1 automated scoring for a single test item."""
 
+    def __init__(self, judge=None):
+        self._judge = judge
+
     def score(
         self,
         item: TestItem,
@@ -23,6 +31,7 @@ class L1Scorer:
         scoring = item.scoring
         l1_score: float = 0.0
         error_msg = None
+        judge_cards = []
 
         try:
             if scoring.type == ScoringType.UNIT_TEST:
@@ -33,6 +42,28 @@ class L1Scorer:
                     pass_threshold=scoring.pass_threshold,
                 )
                 l1_score = test_result.score
+
+            elif scoring.type == ScoringType.TREE_SIMILARITY:
+                # Try native parsing first; if agent output is bad JSON,
+                # fall back to LLM judge (or score 0)
+                try:
+                    expected = TreeSimilarity.parse(scoring.expected_tree)
+                    actual = TreeSimilarity.parse(trace.final_output)
+                    l1_score = TreeSimilarity.compare(actual, expected)
+                except Exception:
+                    l1_score = 0.0
+
+                if l1_score == 0.0 and self._judge:
+                    result = self._judge.score(
+                        item, trace, trace.final_output
+                    )
+                    judge_cards = result.judge_score_cards
+                    if judge_cards:
+                        d2_card = next(
+                            (c for c in judge_cards if c.dimension.value == "D2"),
+                            judge_cards[0],
+                        )
+                        l1_score = d2_card.score / 5.0
 
             elif scoring.type == ScoringType.TOOL_MATCH:
                 if scoring.tool_sequence:
@@ -51,18 +82,28 @@ class L1Scorer:
                         trace.steps, "", scoring.key_params
                     )
 
-            elif scoring.type == ScoringType.TREE_SIMILARITY:
-                expected = TreeSimilarity.parse(scoring.expected_tree)
-                try:
-                    actual = TreeSimilarity.parse(trace.final_output)
-                except Exception:
-                    # Agent didn't output valid JSON — score 0 for this dimension
-                    actual = {}
-                l1_score = TreeSimilarity.compare(actual, expected)
+                if l1_score == 0.0 and self._judge:
+                    result = self._judge.score(
+                        item, trace, trace.final_output
+                    )
+                    judge_cards = result.judge_score_cards
+                    if judge_cards:
+                        d3_card = next(
+                            (c for c in judge_cards if c.dimension.value == "D3"),
+                            judge_cards[0],
+                        )
+                        l1_score = d3_card.score / 5.0
 
             elif scoring.type == ScoringType.LLM_JUDGE:
-                # L1 code-review items also use LLM judge; if no key, score 0
-                l1_score = 0.0
+                if self._judge:
+                    result = self._judge.score(
+                        item, trace, trace.final_output
+                    )
+                    judge_cards = result.judge_score_cards
+                    if judge_cards:
+                        l1_score = judge_cards[0].score / 5.0
+                else:
+                    l1_score = 0.0
 
         except Exception as e:
             l1_score = 0.0
@@ -75,6 +116,7 @@ class L1Scorer:
             layer=item.layer,
             dimensions=item.dimensions,
             l1_score=l1_score,
+            judge_score_cards=judge_cards,
             status="completed",
             run_id=trace.run_id,
             error_message=error_msg,

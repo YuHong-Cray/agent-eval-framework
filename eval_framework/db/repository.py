@@ -121,7 +121,12 @@ class EvalRepository:
     def get_agent_scores(
         self, agent_name: str, agent_version: Optional[str] = None
     ) -> dict[str, dict]:
-        """Return per-dimension average scores for an agent."""
+        """Return per-dimension average scores for an agent.
+
+        Priority: judge_score (1-5) is converted to 0-1 scale.
+        l1_score is used as fallback. The 'combined' field gives the
+        best available score on a 0-1 scale.
+        """
         q = (
             self._session.query(
                 EvalResult.dimension,
@@ -138,13 +143,20 @@ class EvalRepository:
 
         result = {}
         for dim, avg_l1, avg_judge, count in q.all():
+            v_l1 = round(float(avg_l1), 3) if avg_l1 is not None else None
+            v_judge = round(float(avg_judge), 1) if avg_judge is not None else None
+            # Combined: prefer judge (scaled to 0-1), else l1
+            if v_judge is not None:
+                combined = round(v_judge / 5.0, 3)
+            elif v_l1 is not None:
+                combined = v_l1
+            else:
+                combined = 0.0
+
             result[dim] = {
-                "avg_l1_score": round(float(avg_l1), 3)
-                if avg_l1 is not None
-                else None,
-                "avg_judge_score": round(float(avg_judge), 1)
-                if avg_judge is not None
-                else None,
+                "avg_l1_score": v_l1,
+                "avg_judge_score": v_judge,
+                "combined_score": combined,
                 "run_count": count,
             }
         return result
