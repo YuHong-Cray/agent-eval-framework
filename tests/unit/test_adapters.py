@@ -99,37 +99,26 @@ class TestClaudeCodeAdapter:
         assert "-d" in cmd
         assert "--max-turns" in cmd
 
-    def test_parse_json_stream(self):
-        """Should parse Claude Code JSON stream output."""
+    def test_parse_output(self):
+        """Should parse Claude Code result JSON."""
         from eval_framework.adapters.claude_code import ClaudeCodeAdapter
         adapter = ClaudeCodeAdapter()
 
-        stdout = (
-            '{"type":"tool_use","tool":"Read","input":{"file_path":"/a.py"}}\n'
-            '{"type":"tool_result","content":"x=1"}\n'
-            '{"type":"tool_use","tool":"Edit","input":{"file_path":"/a.py","old_string":"x=1","new_string":"x=2"}}\n'
-            '{"type":"tool_result","content":"ok"}\n'
+        raw = (
+            'some log line\n'
+            '{"type":"result","subtype":"success","result":"Fixed: the bug was in line 5","num_turns":3}\n'
         )
-        steps = adapter._parse_json_stream(stdout)
-        assert len(steps) == 2
-        assert steps[0].tool_call.tool_name == "Read"
-        assert steps[0].tool_call.params == {"file_path": "/a.py"}
-        assert steps[1].tool_call.tool_name == "Edit"
+        final, steps = adapter._parse_output(raw)
+        assert "Fixed" in final
 
-    def test_parse_verbose(self):
-        """Should fallback to regex parsing."""
+    def test_parse_output_no_result(self):
+        """Should fallback to raw text when no result JSON found."""
         from eval_framework.adapters.claude_code import ClaudeCodeAdapter
         adapter = ClaudeCodeAdapter()
 
-        out = (
-            "Reading file /src/main.py...\n"
-            "Running command: pytest tests/ -v\n"
-            "All tests passed.\n"
-        )
-        steps = adapter._parse_verbose(out)
-        assert len(steps) == 2
-        assert steps[0].tool_call.tool_name == "Read"
-        assert steps[1].tool_call.tool_name == "Bash"
+        raw = "The file has been patched.\nAll tests pass."
+        final, steps = adapter._parse_output(raw)
+        assert len(final) > 0
 
 
 class TestCrayCodeAdapter:

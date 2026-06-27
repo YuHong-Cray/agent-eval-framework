@@ -1,14 +1,15 @@
-"""Claude Code adapter — drives Claude Code via CLI.
+"""Claude Code adapter — drives Claude via `claude -p`.
 
-Uses `claude -p <prompt> -d <dir> --output-format json --max-turns <n>`
-to run Claude in non-interactive mode and parses the output for tool traces.
+Claude Code outputs a single JSON object per turn (not JSONL stream).
+We parse the final `result` field as the agent output and extract
+tool_use events from the verbose combined output.
 """
 
 import json
-import os
 import re
 import shlex
 import subprocess
+import sys
 import time
 from datetime import datetime, timezone
 from typing import Optional
@@ -16,24 +17,30 @@ from typing import Optional
 from eval_framework.adapters.base import AgentAdapter, TestContext
 from eval_framework.models import AgentCapabilities, AgentTrace, ToolCall, ToolCallStep
 
+# Bump recursion limit for deeply nested JSON from Claude output
+sys.setrecursionlimit(5000)
+
+
+def _truncate_dict(obj, max_depth=5, max_str_len=5000):
+    """Recursively truncate dict values to avoid recursion/deep copy issues."""
+    if isinstance(obj, dict):
+        if max_depth <= 0:
+            return f"<truncated dict with {len(obj)} keys>"
+        return {k: _truncate_dict(v, max_depth - 1, max_str_len) for k, v in obj.items()}
+    elif isinstance(obj, list):
+        if max_depth <= 0:
+            return f"<truncated list of {len(obj)} items>"
+        return [_truncate_dict(v, max_depth - 1, max_str_len) for v in obj[:50]]
+    elif isinstance(obj, str) and len(obj) > max_str_len:
+        return obj[:max_str_len] + "...<truncated>"
+    return obj
+
 
 class ClaudeCodeAdapter(AgentAdapter):
     """Adapter for Claude Code via `claude` CLI.
 
-    Invokes: claude -p "<prompt>" -d <dir> --output-format json --max-turns <n>
-    Parses JSON stream output for tool calls.
+    Runs: claude -p "<prompt>" -d <dir> --output-format json --max-turns <n>
     """
-
-    # Fallback regex patterns for verbose output
-    TOOL_PATTERNS = {
-        "Read": r"Reading\s+(?:file\s+)?(.+)",
-        "Write": r"Writing\s+(?:file\s+)?(.+)",
-        "Edit": r"Editing\s+(?:file\s+)?(.+)",
-        "Bash": r"(?:Running|Executing)\s+command:\s*(.+)",
-        "Grep": r"Searching\s+for\s+(.+?)\s+in\s+(.+)",
-        "Glob": r"Finding\s+files\s+matching\s+(.+)",
-        "Task": r"(?:Dispatching|Launching)\s+(?:sub)?agent:\s*(.+)",
-    }
 
     def __init__(
         self,
@@ -83,14 +90,15 @@ class ClaudeCodeAdapter(AgentAdapter):
             )
 
         end = datetime.now(timezone.utc)
-        output = proc.stdout + "\n" + proc.stderr
+        raw_output = proc.stdout + "\n" + proc.stderr
 
-        # Try JSON stream parsing first, fall back to verbose regex
-        steps = self._parse_json_stream(output)
-        if not steps:
-            steps = self._parse_verbose(output)
+        # Claude outputs a single JSON line with type=result at the end
+        # Extract final text result + limit step count to avoid OOM
+        final_output, steps = self._parse_output(raw_output)
 
-        final_output = self._extract_final_output(output, steps)
+        # Safety: limit steps to avoid huge traces
+        if len(steps) > 200:
+            steps = steps[:200]
 
         return AgentTrace(
             run_id=run_id,
@@ -109,7 +117,7 @@ class ClaudeCodeAdapter(AgentAdapter):
             agent_version=self._agent_version,
             supported_tools=[
                 "Read", "Write", "Edit", "Bash", "Grep", "Glob",
-                "Task", "Agent", "WebSearch", "WebFetch",
+                "Task", "WebSearch", "WebFetch",
             ],
             uses_subagents=True,
             has_memory_across_sessions=True,
@@ -117,139 +125,78 @@ class ClaudeCodeAdapter(AgentAdapter):
         )
 
     def _build_command(self, prompt: str, context: TestContext) -> str:
-        """Build shell-safe command: claude -p <prompt> -d <dir> --max-turns <n>"""
-        parts = [
-            self._command,
-            "-p", shlex.quote(prompt),
-        ]
-
+        """claude -p <prompt> -d <dir> --output-format json --max-turns N"""
+        parts = [self._command, "-p", shlex.quote(prompt)]
         dir_path = context.working_dir or self._workspace
         if dir_path:
             parts.extend(["-d", shlex.quote(dir_path)])
-
         parts.extend(["--max-turns", str(self._max_turns)])
+        parts.extend(["--output-format", "json"])
+        # permission mode
         parts.extend(["--permission-mode", self._permission_mode])
-
-        # Verbose for tool parsing (JSON stream format if available)
-        parts.append("--output-format")
-        parts.append("json")
-
         return " ".join(parts)
 
-    def _parse_json_stream(self, output: str) -> list[ToolCallStep]:
-        """Parse Claude Code JSON stream output.
+    def _parse_output(self, raw: str) -> tuple[str, list[ToolCallStep]]:
+        """Parse Claude Code output into final text and tool steps.
 
-        Claude Code outputs one JSON object per line for tool events:
-          {"type":"tool_use","tool":"Read","input":{"file_path":"..."}}
-          {"type":"tool_result","content":"..."}
+        Claude outputs a final JSON line like: {"type":"result","result":"..."}
+        Steps are reconstructed from text patterns (tool_use events aren't
+        streamed in --output-format json mode in a parseable way).
         """
+        final_output = ""
         steps: list[ToolCallStep] = []
-        pending_tool: dict | None = None
+        now = datetime.now(timezone.utc)
 
-        for line in output.strip().split("\n"):
+        # Try to find the final result JSON line
+        for line in reversed(raw.split("\n")):
             line = line.strip()
-            if not line:
+            if not line or not line.startswith("{"):
                 continue
             try:
                 obj = json.loads(line)
             except json.JSONDecodeError:
                 continue
 
-            if obj.get("type") == "tool_use":
-                pending_tool = {
-                    "tool": obj.get("tool", obj.get("name", "unknown")),
-                    "params": obj.get("input", obj.get("params", {})),
-                    "ts": datetime.now(timezone.utc),
-                }
-            elif obj.get("type") == "tool_result" and pending_tool:
-                raw_result = obj.get("content", {})
-                if not isinstance(raw_result, dict):
-                    raw_result = {"content": str(raw_result)}
-                steps.append(
-                    ToolCallStep(
-                        step_index=len(steps),
-                        tool_call=ToolCall(
-                            tool_name=pending_tool["tool"],
-                            params=pending_tool["params"],
-                        ),
-                        result=raw_result,
-                        timestamp=pending_tool["ts"],
-                        duration_ms=0,
-                    )
-                )
-                pending_tool = None
+            if obj.get("type") == "result":
+                result_text = obj.get("result", "")
+                if isinstance(result_text, str) and len(result_text) > 100:
+                    final_output = result_text
+                # Extract num_turns
+                turns = obj.get("num_turns", 0)
+                break
 
-        # Flush any pending tool without result
-        if pending_tool:
+        # If no final result found, use last 2000 chars of raw output
+        if not final_output:
+            final_output = raw[-2000:] if len(raw) > 2000 else raw
+
+        # Fallback: regex for tool mentions in output (approximate)
+        tool_re = re.compile(
+            r'(Read|Write|Edit|Bash|Grep|Glob|Task)\b.*?(?:["\']([^"\']+)["\'])',
+            re.IGNORECASE,
+        )
+        for m in tool_re.finditer(raw):
+            tool_name = m.group(1).capitalize()
+            param_val = m.group(2) or ""
+            params: dict = {}
+            if tool_name in ("Read", "Write", "Edit"):
+                if param_val:
+                    params["file_path"] = param_val
+            elif tool_name == "Bash":
+                if param_val:
+                    params["command"] = param_val
+            elif tool_name == "Grep":
+                params["pattern"] = param_val
+            elif tool_name == "Glob":
+                params["pattern"] = param_val
+
             steps.append(
                 ToolCallStep(
                     step_index=len(steps),
-                    tool_call=ToolCall(
-                        tool_name=pending_tool["tool"],
-                        params=pending_tool["params"],
-                    ),
+                    tool_call=ToolCall(tool_name=tool_name, params=params),
                     result={},
-                    timestamp=pending_tool["ts"],
+                    timestamp=now,
                     duration_ms=0,
                 )
             )
 
-        return steps
-
-    def _parse_verbose(self, output: str) -> list[ToolCallStep]:
-        """Fallback: regex parse human-readable output."""
-        steps: list[ToolCallStep] = []
-        now = datetime.now(timezone.utc)
-
-        for line in output.split("\n"):
-            for tool_name, pattern in self.TOOL_PATTERNS.items():
-                m = re.search(pattern, line, re.IGNORECASE)
-                if m:
-                    params = self._extract_params(tool_name, m)
-                    steps.append(
-                        ToolCallStep(
-                            step_index=len(steps),
-                            tool_call=ToolCall(tool_name=tool_name, params=params),
-                            result={},
-                            timestamp=now,
-                            duration_ms=0,
-                        )
-                    )
-                    break
-        return steps
-
-    @staticmethod
-    def _extract_params(tool_name: str, match: re.Match) -> dict:
-        if tool_name in ("Read", "Write", "Edit"):
-            return {"file_path": match.group(1).strip()}
-        elif tool_name == "Bash":
-            return {"command": match.group(1).strip()}
-        elif tool_name == "Grep":
-            return {"pattern": match.group(1).strip(), "path": match.group(2).strip() if match.lastindex and match.lastindex >= 2 else ""}
-        elif tool_name == "Glob":
-            return {"pattern": match.group(1).strip()}
-        elif tool_name in ("Task", "Agent"):
-            return {"prompt": match.group(1).strip()}
-        return {}
-
-    @staticmethod
-    def _extract_final_output(output: str, steps: list[ToolCallStep]) -> str:
-        """Extract final assistant message after last tool call."""
-        lines = output.strip().split("\n")
-        final_lines = []
-        for line in reversed(lines):
-            stripped = line.strip()
-            if not stripped:
-                if final_lines:
-                    break
-                continue
-            try:
-                obj = json.loads(stripped)
-                if obj.get("type") in ("tool_use", "tool_result"):
-                    break
-                if "final" in obj or "result" in obj:
-                    final_lines.append(stripped)
-                    break
-            except json.JSONDecodeError:
-                final_lines.append(stripped)
-        return "\n".join(reversed(final_lines))
+        return final_output, steps
