@@ -54,6 +54,19 @@ class L2L3Judge:
         deliverables: str,
     ) -> TestResult:
         """Submit trace and deliverables to LLM judge, return scored result."""
+        # Skip if no API key configured — return unscored result
+        if not self._api_key:
+            return TestResult(
+                test_item_id=item.id,
+                agent_name=trace.agent_name,
+                agent_version=trace.agent_version,
+                layer=item.layer,
+                dimensions=item.dimensions,
+                status="skipped",
+                run_id=trace.run_id,
+                error_message="No EVAL_JUDGE_API_KEY configured. Set env var or config.yaml scoring.l2_l3.api_key.",
+            )
+
         prompt = self._build_prompt(item, trace, deliverables)
 
         for attempt in range(self._max_retries):

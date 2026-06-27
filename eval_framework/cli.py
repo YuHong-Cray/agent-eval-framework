@@ -72,10 +72,15 @@ def run(adapter: str, command: str, layer: str, count: int, seed: int):
     results = scheduler.run_layer(layer, items)
 
     completed = [r for r in results if r.status == "completed"]
-    errors = [r for r in results if r.status != "completed"]
+    skipped = [r for r in results if r.status == "skipped"]
+    errors = [
+        r for r in results
+        if r.status not in ("completed", "skipped")
+    ]
 
     click.echo(
         f"\nResults: {len(completed)} completed, "
+        f"{len(skipped)} skipped, "
         f"{len(errors)} failed/timeout"
     )
 
@@ -84,6 +89,12 @@ def run(adapter: str, command: str, layer: str, count: int, seed: int):
             r.l1_score or 0 for r in completed
         ) / len(completed)
         click.echo(f"Average L1 score: {avg_score:.3f}")
+
+    if skipped:
+        for s in skipped:
+            click.echo(
+                f"  {s.test_item_id}: skipped — {s.error_message}"
+            )
 
     if errors:
         for e in errors:
