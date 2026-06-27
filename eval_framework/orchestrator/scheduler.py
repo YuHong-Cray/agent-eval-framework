@@ -1,10 +1,8 @@
-"""Test execution scheduler with concurrency control.
+"""Test execution scheduler — stable serial execution for all layers.
 
-Each _run_single_item creates a fresh DB session so that concurrent
-L1 execution via ThreadPoolExecutor works with SQLite.
+Each _run_single_item creates a fresh DB session so SQLite works correctly.
 """
 
-import concurrent.futures
 import sys
 import tempfile
 import time
@@ -28,7 +26,7 @@ from eval_framework.scoring.l2_l3_judge import L2L3Judge
 
 
 class Scheduler:
-    """Orchestrates evaluation runs across layers."""
+    """Orchestrates evaluation runs across layers — serial, stable execution."""
 
     def __init__(
         self,
@@ -39,8 +37,6 @@ class Scheduler:
         judge: Optional[L2L3Judge] = None,
     ):
         self._adapter = adapter
-        # repository arg kept for backward compat, but unused —
-        # each _run_single_item creates its own session
         self._registry = registry or TestItemRegistry()
         self._sandbox = sandbox
         self._judge = judge or L2L3Judge()
@@ -48,7 +44,6 @@ class Scheduler:
         self._preparer = ContextPreparer(self._registry)
 
     def _get_repo(self) -> EvalRepository:
-        """Fresh session+repo per thread (SQLite requires this)."""
         return EvalRepository(get_session())
 
     def run_layer(
@@ -56,51 +51,31 @@ class Scheduler:
         layer: str,
         items: Optional[list[TestItem]] = None,
     ) -> list[TestResult]:
-        """Run all items for a given layer. Returns results."""
+        """Run all items for a given layer serially. Returns results."""
         if items is None:
             items = self._registry.get_by_layer(layer)
 
-        layer_cfg = config.get_layer_config(layer.lower())
-        max_concurrency = (
-            config.get_sandbox_config().get("max_concurrency", 4)
-            if layer_cfg.get("concurrency") == "high"
-            else 3
-        )
-
         results: list[TestResult] = []
+        total = len(items)
 
-        if layer == "L1":
-            with concurrent.futures.ThreadPoolExecutor(
-                max_workers=max_concurrency
-            ) as executor:
-                futures = {
-                    executor.submit(self._run_single_item, item): item
-                    for item in items
-                }
-                for future in concurrent.futures.as_completed(futures):
-                    try:
-                        result = future.result(
-                            timeout=layer_cfg.get("timeout_minutes", 15) * 60
-                        )
-                        results.append(result)
-                    except concurrent.futures.TimeoutError:
-                        item = futures[future]
-                        caps = self._adapter.capabilities()
-                        results.append(
-                            TestResult(
-                                test_item_id=item.id,
-                                agent_name=caps.agent_name,
-                                agent_version=caps.agent_version,
-                                layer=item.layer,
-                                dimensions=item.dimensions,
-                                status="timeout",
-                                error_message="Execution timed out",
-                            )
-                        )
-        else:
-            for item in items:
+        for i, item in enumerate(items):
+            print(f"  [{i+1}/{total}] {item.id}")
+            try:
                 result = self._run_single_item(item)
                 results.append(result)
+            except Exception as e:
+                caps = self._adapter.capabilities()
+                results.append(
+                    TestResult(
+                        test_item_id=item.id,
+                        agent_name=caps.agent_name,
+                        agent_version=caps.agent_version,
+                        layer=item.layer,
+                        dimensions=item.dimensions,
+                        status="error",
+                        error_message=str(e),
+                    )
+                )
 
         return results
 
@@ -133,7 +108,7 @@ class Scheduler:
                 trace = self._adapter.execute(item.prompt_template, context)
                 trace.run_id = collector.run_id
 
-                # Safety truncation: limit trace size before scoring/persistence
+                # Safety truncation
                 trace.steps = trace.steps[:50]
                 trace.final_output = (trace.final_output or "")[:5000]
 
@@ -141,15 +116,12 @@ class Scheduler:
                     result = self._scorer.score(item, trace, str(workspace))
                 else:
                     result = self._judge.score(
-                        item,
-                        trace,
+                        item, trace,
                         self._collect_deliverables(item, workspace),
                     )
 
-                # Persist (each thread has its own session)
                 repo.save_run(trace)
 
-                # Build a map of dimension → judge_score from judge_score_cards
                 judge_map = {}
                 if result.judge_score_cards:
                     for card in result.judge_score_cards:
@@ -170,7 +142,6 @@ class Scheduler:
             trace = collector.finish(f"Error: {e}")
             try:
                 repo.save_run(trace)
-                # Save results with 0.0 so dimensions don't disappear
                 for dim in item.dimensions:
                     repo.save_result(
                         run_id=collector.run_id,
@@ -194,7 +165,6 @@ class Scheduler:
 
     @staticmethod
     def _collect_deliverables(item: TestItem, workspace: Path) -> str:
-        """Collect deliverable file contents for judge review."""
         parts = []
         for rel in item.expected_artifacts:
             path = workspace / rel
