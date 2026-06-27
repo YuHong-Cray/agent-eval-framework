@@ -143,5 +143,18 @@ def report(agent: str, output: str):
     click.echo(f"Report saved to {out_path}")
 
 
+@main.command()
+@click.confirmation_option(prompt="Drop all evaluation data and start fresh?")
+def reset():
+    """Delete all evaluation records from the database."""
+    from eval_framework.db.models import Base
+    from eval_framework.db.connection import get_engine
+
+    engine = get_engine()
+    Base.metadata.drop_all(engine)
+    Base.metadata.create_all(engine)
+    click.echo("All evaluation data cleared. Ready for fresh testing.")
+
+
 if __name__ == "__main__":
     main()
