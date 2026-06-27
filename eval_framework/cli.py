@@ -56,9 +56,10 @@ def run(adapter: str, command: str, layer: str, count: int, seed: int):
     click.echo(f"Selected {len(items)} items for {layer}")
 
     click.echo(f"Creating adapter '{adapter}'...")
-    agent = AdapterFactory.create(
-        adapter, command=command, workspace="/tmp/eval"
-    )
+    kwargs = {"workspace": "/tmp/eval"}
+    if command:
+        kwargs["command"] = command
+    agent = AdapterFactory.create(adapter, **kwargs)
 
     repo = EvalRepository(get_session())
     scheduler = Scheduler(

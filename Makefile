@@ -52,7 +52,7 @@ build-sandbox:
 run-eval:
 	python -m eval_framework.cli run \
 		--adapter $(ADAPTER) \
-		--command "$(COMMAND)" \
+		$(if $(COMMAND),--command "$(COMMAND)",) \
 		--layer $(LAYER) \
 		--count $(COUNT) \
 		$(if $(SEED),--seed $(SEED),)
