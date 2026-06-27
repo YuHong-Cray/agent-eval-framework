@@ -1,4 +1,5 @@
 # eval_framework global configuration
+
 sandbox:
   docker_host: "unix:///var/run/docker.sock"
   default_image_python: "eval-sandbox-python:latest"
@@ -9,8 +10,8 @@ sandbox:
   timeout_default: 900           # 15 min default
 
 database:
-  url: "sqlite:///eval_framework.db"       # SQLite for local dev
-  # url: "postgresql://eval:eval@localhost:5432/eval_framework"  # PostgreSQL for production
+  url: "sqlite:///eval_framework.db"
+  # url: "postgresql://eval:eval@localhost:5432/eval_framework"  # PostgreSQL
 
 scoring:
   l1:
@@ -19,6 +20,8 @@ scoring:
     judge_model: "deepseek-v4-flash"
     judge_api_base: "https://api.deepseek.com"
     judge_max_retries: 3
+    # Set your API key here, or via EVAL_JUDGE_API_KEY / DEEPSEEK_API_KEY env var
+    api_key: ""
 
 layers:
   l1:

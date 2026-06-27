@@ -33,6 +33,10 @@ class Config:
             self._data.setdefault("scoring", {}).setdefault("l2_l3", {})[
                 "api_key"
             ] = judge_key
+        elif judge_key := os.getenv("DEEPSEEK_API_KEY"):
+            self._data.setdefault("scoring", {}).setdefault("l2_l3", {})[
+                "api_key"
+            ] = judge_key
         if sandbox_concurrency := os.getenv("EVAL_SANDBOX_MAX_CONCURRENCY"):
             self._data.setdefault("sandbox", {})["max_concurrency"] = int(
                 sandbox_concurrency
