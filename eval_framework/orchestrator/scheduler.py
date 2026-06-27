@@ -154,6 +154,15 @@ class Scheduler:
             trace = collector.finish(f"Error: {e}")
             try:
                 repo.save_run(trace)
+                # Save results with 0.0 so dimensions don't disappear
+                for dim in item.dimensions:
+                    repo.save_result(
+                        run_id=collector.run_id,
+                        test_item_id=item.id,
+                        dimension=dim.value,
+                        l1_score=0.0,
+                        status="error",
+                    )
             except Exception:
                 pass
             return TestResult(
