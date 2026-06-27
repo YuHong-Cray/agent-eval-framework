@@ -23,9 +23,10 @@ class AdapterFactory:
 
 
 from eval_framework.adapters.cray_code import CrayCodeAdapter
+from eval_framework.adapters.claude_code import ClaudeCodeAdapter
 
 # Built-in registrations
 AdapterFactory.register("cli", CLIAdapter)
 AdapterFactory.register("craycode", CrayCodeAdapter)
-AdapterFactory.register("cray", CrayCodeAdapter)      # short alias
-AdapterFactory.register("claude", CrayCodeAdapter)   # compat alias
+AdapterFactory.register("cray", CrayCodeAdapter)
+AdapterFactory.register("claude", ClaudeCodeAdapter)

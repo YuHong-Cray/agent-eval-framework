@@ -64,6 +64,74 @@ class TestCLIAdapter:
         assert "hello world" in trace.final_output
 
 
+class TestClaudeCodeAdapter:
+    def test_capabilities(self):
+        """ClaudeCodeAdapter should report full capabilities with subagents."""
+        from eval_framework.adapters.claude_code import ClaudeCodeAdapter
+        adapter = ClaudeCodeAdapter(
+            command="claude",
+            workspace="/tmp/eval",
+        )
+        caps = adapter.capabilities()
+        assert caps.agent_name == "claude"
+        assert caps.uses_subagents is True
+        assert caps.has_memory_across_sessions is True
+        assert "Read" in caps.supported_tools
+        assert "Task" in caps.supported_tools
+
+    def test_build_command(self):
+        """Should build correct claude CLI command."""
+        from eval_framework.adapters.claude_code import ClaudeCodeAdapter
+        from eval_framework.adapters.base import TestContext
+        from eval_framework.models import Layer, Dimension
+
+        adapter = ClaudeCodeAdapter(command="claude")
+        ctx = TestContext(
+            test_item_id="L1-TEST",
+            layer=Layer.L1,
+            dimensions=[Dimension.D1],
+            working_dir="/tmp/eval",
+        )
+        cmd = adapter._build_command("hello", ctx)
+        assert isinstance(cmd, str)
+        assert "-p" in cmd
+        assert "hello" in cmd
+        assert "-d" in cmd
+        assert "--max-turns" in cmd
+
+    def test_parse_json_stream(self):
+        """Should parse Claude Code JSON stream output."""
+        from eval_framework.adapters.claude_code import ClaudeCodeAdapter
+        adapter = ClaudeCodeAdapter()
+
+        stdout = (
+            '{"type":"tool_use","tool":"Read","input":{"file_path":"/a.py"}}\n'
+            '{"type":"tool_result","content":"x=1"}\n'
+            '{"type":"tool_use","tool":"Edit","input":{"file_path":"/a.py","old_string":"x=1","new_string":"x=2"}}\n'
+            '{"type":"tool_result","content":"ok"}\n'
+        )
+        steps = adapter._parse_json_stream(stdout)
+        assert len(steps) == 2
+        assert steps[0].tool_call.tool_name == "Read"
+        assert steps[0].tool_call.params == {"file_path": "/a.py"}
+        assert steps[1].tool_call.tool_name == "Edit"
+
+    def test_parse_verbose(self):
+        """Should fallback to regex parsing."""
+        from eval_framework.adapters.claude_code import ClaudeCodeAdapter
+        adapter = ClaudeCodeAdapter()
+
+        out = (
+            "Reading file /src/main.py...\n"
+            "Running command: pytest tests/ -v\n"
+            "All tests passed.\n"
+        )
+        steps = adapter._parse_verbose(out)
+        assert len(steps) == 2
+        assert steps[0].tool_call.tool_name == "Read"
+        assert steps[1].tool_call.tool_name == "Bash"
+
+
 class TestCrayCodeAdapter:
     def test_capabilities(self):
         """CrayCodeAdapter should report full capabilities with subagents."""
