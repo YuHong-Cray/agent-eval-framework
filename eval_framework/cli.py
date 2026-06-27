@@ -1,6 +1,8 @@
 """CLI entry point for the evaluation framework."""
 
 import sys
+sys.setrecursionlimit(10000)  # Pydantic + deep JSON needs more headroom
+
 from datetime import datetime
 from pathlib import Path
 

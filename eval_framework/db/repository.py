@@ -23,7 +23,31 @@ class EvalRepository:
         self._session = session
 
     def save_run(self, trace: AgentTrace) -> EvalRun:
-        """Save a completed evaluation run with its trace."""
+        """Save a completed evaluation run with its trace.
+
+        Safety: limits steps to 50 and truncates final_output to 5000 chars
+        to prevent massive traces from blowing up DB and causing recursion.
+        """
+        safe_steps = trace.steps[:50]
+        safe_output = (trace.final_output or "")[:5000]
+
+        # Use manual JSON to avoid Pydantic deep-recursion on large models
+        safe_steps_json = json.dumps(
+            [
+                {
+                    "step_index": s.step_index,
+                    "tool_call": {
+                        "tool_name": s.tool_call.tool_name,
+                        "params": dict(list(s.tool_call.params.items())[:20])
+                        if s.tool_call.params else {},
+                    },
+                    "duration_ms": s.duration_ms,
+                }
+                for s in safe_steps
+            ],
+            default=str,
+        )
+
         run = EvalRun(
             run_id=trace.run_id,
             agent_name=trace.agent_name,
@@ -36,10 +60,8 @@ class EvalRepository:
         )
         trace_record = TraceRecord(
             run_id=trace.run_id,
-            steps_json=json.dumps(
-                [s.model_dump(mode="json") for s in trace.steps]
-            ),
-            final_output=trace.final_output,
+            steps_json=safe_steps_json,
+            final_output=safe_output,
         )
         self._session.add(run)
         self._session.add(trace_record)

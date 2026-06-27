@@ -5,11 +5,15 @@ L1 execution via ThreadPoolExecutor works with SQLite.
 """
 
 import concurrent.futures
+import sys
 import tempfile
 import time
 import uuid
 from pathlib import Path
 from typing import Optional
+
+# Bump recursion limit for Pydantic serialization of large traces
+sys.setrecursionlimit(10000)
 
 from eval_framework.adapters.base import AgentAdapter, TestContext
 from eval_framework.config import config
@@ -128,6 +132,10 @@ class Scheduler:
                 collector.start()
                 trace = self._adapter.execute(item.prompt_template, context)
                 trace.run_id = collector.run_id
+
+                # Safety truncation: limit trace size before scoring/persistence
+                trace.steps = trace.steps[:50]
+                trace.final_output = (trace.final_output or "")[:5000]
 
                 if item.layer == Layer.L1:
                     result = self._scorer.score(item, trace, str(workspace))
