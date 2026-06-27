@@ -1,11 +1,11 @@
 """Database connection setup.
 
-Uses scoped_session per thread so that concurrent L1 execution
-via ThreadPoolExecutor doesn't share SQLite connections.
+Thread-safe SQLite: WAL journal mode + write lock in repository.
+Each thread gets its own session; commits are serialized via _write_lock.
 """
 
-from sqlalchemy import create_engine
-from sqlalchemy.orm import Session, scoped_session, sessionmaker
+from sqlalchemy import create_engine, event
+from sqlalchemy.orm import Session, sessionmaker
 
 from eval_framework.config import config
 
@@ -18,16 +18,21 @@ def get_engine():
     if _engine is None:
         url = config.get_database_url()
         kwargs: dict = {}
-        # SQLite needs these for multi-threaded access
         if url.startswith("sqlite"):
             kwargs["connect_args"] = {"check_same_thread": False}
-            kwargs["poolclass"] = __import__("sqlalchemy.pool").pool.StaticPool
-        _engine = create_engine(
-            url,
-            echo=False,
-            pool_pre_ping=True,
-            **kwargs,
-        )
+        else:
+            kwargs["pool_pre_ping"] = True
+
+        _engine = create_engine(url, echo=False, **kwargs)
+
+        # Enable WAL mode for SQLite — allows concurrent reads + single writer
+        if url.startswith("sqlite"):
+
+            @event.listens_for(_engine, "connect")
+            def _set_wal(dbapi_conn, _rec):
+                dbapi_conn.execute("PRAGMA journal_mode=WAL")
+                dbapi_conn.execute("PRAGMA busy_timeout=5000")
+
     return _engine
 
 

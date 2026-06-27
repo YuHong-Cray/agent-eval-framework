@@ -1,6 +1,11 @@
-"""Data access layer for evaluation results."""
+"""Data access layer for evaluation results.
+
+Thread-safe: all write methods acquire a global lock so that concurrent
+SQLite access across ThreadPoolExecutor workers is serialized.
+"""
 
 import json
+import threading
 from typing import Optional
 
 from sqlalchemy import func
@@ -8,6 +13,9 @@ from sqlalchemy.orm import Session
 
 from eval_framework.db.models import EvalResult, EvalRun, TraceRecord
 from eval_framework.models import AgentTrace
+
+# Global lock for serializing SQLite write operations across threads
+_write_lock = threading.Lock()
 
 
 class EvalRepository:
@@ -35,7 +43,12 @@ class EvalRepository:
         )
         self._session.add(run)
         self._session.add(trace_record)
-        self._session.commit()
+        with _write_lock:
+            try:
+                self._session.commit()
+            except Exception:
+                self._session.rollback()
+                raise
         return run
 
     def get_run(self, run_id: str) -> Optional[EvalRun]:
@@ -70,7 +83,12 @@ class EvalRepository:
         if run:
             run.status = status
             run.error_message = error_message
-            self._session.commit()
+            with _write_lock:
+                try:
+                    self._session.commit()
+                except Exception:
+                    self._session.rollback()
+                    raise
 
     def save_result(
         self,
@@ -92,7 +110,12 @@ class EvalRepository:
             status=status,
         )
         self._session.add(result)
-        self._session.commit()
+        with _write_lock:
+            try:
+                self._session.commit()
+            except Exception:
+                self._session.rollback()
+                raise
         return result
 
     def get_agent_scores(
