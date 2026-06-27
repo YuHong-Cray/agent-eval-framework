@@ -1,6 +1,6 @@
 # Agent Eval Framework
 
-[![Tests](https://img.shields.io/badge/tests-46%2F46%20PASS-brightgreen)](https://github.com)
+[![Tests](https://img.shields.io/badge/tests-46%2F46%20PASS-brightgreen)](https://github.com/yuHong-Cray/agent-eval-framework)
 [![Python](https://img.shields.io/badge/python-3.12%2B-blue)](https://www.python.org/)
 [![License](https://img.shields.io/badge/license-MIT-green)](LICENSE)
 
@@ -64,7 +64,7 @@
 
 ```bash
 # 克隆仓库
-git clone https://github.com/YOUR_USERNAME/agent-eval-framework.git
+git clone https://github.com/yuHong-Cray/agent-eval-framework.git
 cd agent-eval-framework
 
 # 安装依赖
