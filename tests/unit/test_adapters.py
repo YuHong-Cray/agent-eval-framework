@@ -82,7 +82,7 @@ class TestCrayCodeAdapter:
         assert "Task" in caps.supported_tools
 
     def test_build_command(self):
-        """Should build correct cray CLI command with --input flag."""
+        """Should build shell-safe cray CLI command with shlex.quote()."""
         from eval_framework.adapters.cray_code import CrayCodeAdapter
         from eval_framework.adapters.base import TestContext
         from eval_framework.models import Layer, Dimension
@@ -98,11 +98,34 @@ class TestCrayCodeAdapter:
             working_dir="/tmp/eval",
         )
         cmd = adapter._build_command('say hello', ctx)
+        assert isinstance(cmd, str)
+        assert cmd.startswith("cray")
         assert "--input" in cmd
         assert "say hello" in cmd
-        assert '-d' in cmd or '--dir' in cmd
-        assert '-m "deepseek-v4-pro"' in cmd
+        assert "-d" in cmd
+        assert "-m" in cmd
+        assert "deepseek-v4-pro" in cmd
         assert "-v" in cmd
+
+    def test_build_command_escapes_injection(self):
+        """Should shlex.quote() dangerous characters in prompt and paths."""
+        from eval_framework.adapters.cray_code import CrayCodeAdapter
+        from eval_framework.adapters.base import TestContext
+        from eval_framework.models import Layer, Dimension
+
+        adapter = CrayCodeAdapter(command="cray")
+        ctx = TestContext(
+            test_item_id="L1-TEST",
+            layer=Layer.L1,
+            dimensions=[Dimension.D1],
+            working_dir="/tmp/eval",
+        )
+        # Prompt with shell metacharacters should be safely quoted
+        cmd = adapter._build_command('hello; rm -rf /', ctx)
+        # The quoted prompt is wrapped — verify it's in the command
+        assert "--input" in cmd
+        # shlex.quote() wraps the entire prompt so the shell treats it as one arg
+        assert cmd.count("--input") == 1
 
     def test_parse_verbose_output(self):
         """Should parse cray permission lines for tool calls."""

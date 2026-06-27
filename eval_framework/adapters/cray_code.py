@@ -5,8 +5,8 @@ in non-interactive mode and parses the output to capture tool-call traces.
 """
 
 import json
-import os
 import re
+import shlex
 import subprocess
 import time
 from datetime import datetime, timezone
@@ -61,7 +61,7 @@ class CrayCodeAdapter(AgentAdapter):
         run_id = f"run-{context.test_item_id}-{int(time.time())}"
         start = datetime.now(timezone.utc)
 
-        # Build shell command string
+        # Build command with shlex.quote() for shell=True safety
         cmd = self._build_command(prompt, context)
 
         try:
@@ -69,6 +69,8 @@ class CrayCodeAdapter(AgentAdapter):
                 cmd,
                 capture_output=True,
                 text=True,
+                encoding="utf-8",
+                errors="replace",
                 shell=True,
                 cwd=context.working_dir,
                 timeout=context.layer_timeout_seconds(),
@@ -119,27 +121,27 @@ class CrayCodeAdapter(AgentAdapter):
         )
 
     def _build_command(self, prompt: str, context: TestContext) -> str:
-        """Build Cray CLI command: cray --input "<prompt>" -d <dir> -m <model> -v"""
-        # Escape prompt for shell — replace " with \"
-        escaped_prompt = prompt.replace('"', '\\"').replace('\n', '\\n')
+        """Build a shell-safe Cray CLI command using shlex.quote().
 
-        parts = [
-            self._command,
-            f'--input "{escaped_prompt}"',
-        ]
+        Produces: cray --input <quoted-prompt> -d <quoted-dir> ... -v
+
+        Uses shlex.quote() on all user-controlled values to prevent command injection
+        while still supporting Windows npm/.cmd wrappers that require shell=True.
+        """
+        parts = [self._command, "--input", shlex.quote(prompt)]
 
         dir_path = context.working_dir or self._workspace
         if dir_path:
-            parts.append(f'-d "{dir_path}"')
+            parts.extend(["-d", shlex.quote(dir_path)])
 
         if self._default_model:
-            parts.append(f'-m "{self._default_model}"')
+            parts.extend(["-m", shlex.quote(self._default_model)])
 
         if self._max_turns:
-            parts.append(f"--max-turns {self._max_turns}")
+            parts.extend(["--max-turns", str(self._max_turns)])
 
         if self._permission_mode:
-            parts.append(f'-p {self._permission_mode}')
+            parts.extend(["-p", shlex.quote(self._permission_mode)])
 
         # Verbose mode for trace parsing
         parts.append("-v")
