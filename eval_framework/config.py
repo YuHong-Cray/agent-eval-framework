@@ -7,7 +7,8 @@ from typing import Any, Optional
 import yaml
 from dotenv import load_dotenv
 
-load_dotenv()
+# Load .env from project root (not eval_framework/)
+load_dotenv(Path(__file__).parent.parent / ".env")
 
 _DEFAULT_CONFIG_PATH = Path(__file__).parent.parent / "config.yaml"
 

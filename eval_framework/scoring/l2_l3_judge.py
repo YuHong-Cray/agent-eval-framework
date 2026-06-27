@@ -1,6 +1,7 @@
 """LLM-as-Judge scoring for L2 and L3 test items."""
 
 import json
+import os
 from typing import Optional
 
 import httpx
@@ -44,7 +45,12 @@ class L2L3Judge:
         self._api_base = api_base or cfg.get(
             "judge_api_base", "https://api.deepseek.com"
         )
-        self._api_key = api_key or cfg.get("api_key", "")
+        self._api_key = (
+            api_key
+            or cfg.get("api_key", "")
+            or os.environ.get("EVAL_JUDGE_API_KEY", "")
+            or os.environ.get("DEEPSEEK_API_KEY", "")
+        )
         self._max_retries = cfg.get("judge_max_retries", 3)
 
     def score(
