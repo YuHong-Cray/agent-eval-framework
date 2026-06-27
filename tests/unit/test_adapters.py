@@ -99,26 +99,28 @@ class TestClaudeCodeAdapter:
         assert "-d" in cmd
         assert "--max-turns" in cmd
 
-    def test_parse_output(self):
-        """Should parse Claude Code result JSON."""
+    def test_extract_result(self):
+        """Should extract result text via regex, not json.loads."""
         from eval_framework.adapters.claude_code import ClaudeCodeAdapter
-        adapter = ClaudeCodeAdapter()
+
+        raw = '{"type":"result","subtype":"success","result":"Fixed: the bug was on line 5.\\\\nAdded error handling.","num_turns":3}'
+        final = ClaudeCodeAdapter._extract_result(raw)
+        assert "Fixed: the bug was on line 5" in final
+
+    def test_extract_steps(self):
+        """Should extract tool permissions from raw output."""
+        from eval_framework.adapters.claude_code import ClaudeCodeAdapter
 
         raw = (
-            'some log line\n'
-            '{"type":"result","subtype":"success","result":"Fixed: the bug was in line 5","num_turns":3}\n'
+            '[Claude] [Permission] auto-approve: allowing "bash"\n'
+            '[Claude] [Permission] auto-approve: allowing "read"\n'
+            '[Claude] [Permission] auto-approve: allowing "write"\n'
         )
-        final, steps = adapter._parse_output(raw)
-        assert "Fixed" in final
-
-    def test_parse_output_no_result(self):
-        """Should fallback to raw text when no result JSON found."""
-        from eval_framework.adapters.claude_code import ClaudeCodeAdapter
-        adapter = ClaudeCodeAdapter()
-
-        raw = "The file has been patched.\nAll tests pass."
-        final, steps = adapter._parse_output(raw)
-        assert len(final) > 0
+        steps = ClaudeCodeAdapter._extract_steps(raw)
+        assert len(steps) == 3
+        assert steps[0].tool_call.tool_name == "Bash"
+        assert steps[1].tool_call.tool_name == "Read"
+        assert steps[2].tool_call.tool_name == "Write"
 
 
 class TestCrayCodeAdapter:
