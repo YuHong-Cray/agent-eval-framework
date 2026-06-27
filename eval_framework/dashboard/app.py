@@ -30,16 +30,26 @@ st.title("📊 Coding Agent Evaluation Dashboard")
 init_db()
 repo = EvalRepository(get_session())
 
+# ── Quick stats ───────────────────────────────────────
+
+from eval_framework.db.models import EvalRun
+session = repo._session
+total_runs = session.query(EvalRun).count()
+db_agents = [a[0] for a in session.query(EvalRun.agent_name).distinct().all()]
+
+st.metric("Total Runs", total_runs)
+st.metric("Agents", len(db_agents))
+st.caption(f"Agent(s): {', '.join(db_agents) if db_agents else 'none — run eval first'}")
 
 # ── Sidebar ──────────────────────────────────────────
 
 st.sidebar.header("🔍 Filters")
 
-agent_list = ["craycode", "copilot", "cursor", "cli-generic"]
+agent_list = db_agents if db_agents else ["craycode", "copilot", "cursor", "cli-generic"]
 selected_agents = st.sidebar.multiselect(
     "Select Agents",
     agent_list,
-    default=agent_list[:2],
+    default=agent_list[: min(2, len(agent_list))],
 )
 
 view_mode = st.sidebar.radio(
