@@ -1,0 +1,49 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+dist/
+build/
+.eggs/
+
+# Virtual env
+venv/
+.venv/
+env/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Database
+*.db
+*.db-shm
+*.db-wal
+
+# Reports
+reports/
+
+# Pytest
+.pytest_cache/
+htmlcov/
+.coverage
+
+# Docker
+# (keep dockerfiles, ignore build artifacts)
+
+# Environment
+.env
+.env.local
+
+# Logs
+*.log
+
+# Streamlit
+.streamlit/
+.claude/settings.local.json

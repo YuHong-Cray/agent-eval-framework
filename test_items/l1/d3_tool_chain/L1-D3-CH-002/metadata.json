@@ -1,0 +1,37 @@
+{
+  "id": "L1-D3-CH-002",
+  "layer": "L1",
+  "dimensions": [
+    "D3"
+  ],
+  "sub_dimensions": [],
+  "language": "any",
+  "difficulty": 3,
+  "estimated_time_min": 9,
+  "tags": [
+    "chain",
+    "search-read-edit"
+  ],
+  "sandbox": {
+    "image": "python",
+    "dependencies": [],
+    "network": "none"
+  },
+  "prompt_template": "Search for files containing `FIXME` under `/project/src/`, then for each file found, read it to understand the issue, and fix the first one. Use Grep ¡ú Read ¡ú Edit in sequence.",
+  "context_files": [],
+  "expected_artifacts": [],
+  "scoring": {
+    "type": "tool_match",
+    "tool_sequence": [
+      "Grep",
+      "Read",
+      "Edit"
+    ],
+    "key_params": [
+      "pattern",
+      "file_path"
+    ]
+  },
+  "created": "2026-07-01",
+  "version": "1.0"
+}

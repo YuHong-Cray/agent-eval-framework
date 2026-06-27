@@ -1,0 +1,47 @@
+{
+  "id": "L3-PROJECT-002-L3-PROJECT-002-S1",
+  "layer": "L3",
+  "dimensions": [
+    "D2",
+    "D4",
+    "D6"
+  ],
+  "sub_dimensions": [
+    "D1",
+    "D3",
+    "D5"
+  ],
+  "language": "python",
+  "difficulty": 5,
+  "estimated_time_min": 90,
+  "tags": [
+    "multi-agent",
+    "refactor",
+    "coordination"
+  ],
+  "sandbox": {
+    "image": "python",
+    "dependencies": [
+      "pytest",
+      "flask",
+      "sqlalchemy",
+      "pyjwt"
+    ],
+    "network": "none"
+  },
+  "prompt_template": "# Project: Library Management System Refactor ¡ª Session 1 of 2\n\nYou are given a monolithic `library.py` (800 lines) that handles books, members, loans, fines, and reporting all in one file with tightly coupled classes.\n\nYour tasks:\n1. Read and fully understand `library.py`\n2. Write `REFACTOR_PLAN.md` documenting:\n   - The current architecture and its problems\n   - Proposed new modular structure (which sub-agents should handle what)\n   - Migration strategy (incremental, keep tests passing)\n3. Create `test_library.py` with integration tests covering the current behavior (these tests act as a safety net for the refactor)\n4. Identify which parts are independent and can be extracted in parallel\n\nIMPORTANT: In session 2, you MUST use sub-agents to perform the actual refactor. Use the Task/Agent dispatching mechanism to assign each module to a separate sub-agent. Plan accordingly now.",
+  "context_files": [
+    "context\\library.py",
+    "context\\README.md"
+  ],
+  "expected_artifacts": [
+    "REFACTOR_PLAN.md",
+    "test_library.py"
+  ],
+  "scoring": {
+    "type": "llm_judge",
+    "pass_threshold": 0.65
+  },
+  "created": "2026-07-15",
+  "version": "1.0"
+}

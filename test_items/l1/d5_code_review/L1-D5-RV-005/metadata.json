@@ -1,0 +1,30 @@
+{
+  "id": "L1-D5-RV-005",
+  "layer": "L1",
+  "dimensions": [
+    "D5"
+  ],
+  "sub_dimensions": [],
+  "language": "python",
+  "difficulty": 3,
+  "estimated_time_min": 18,
+  "tags": [
+    "review",
+    "API-design"
+  ],
+  "sandbox": {
+    "image": "python",
+    "dependencies": [],
+    "network": "none"
+  },
+  "prompt_template": "Review this API endpoint for issues:\n\n```python\n@app.post('/api/users')\ndef create_user():\n    data = request.get_json()\n    user = User(\n        name=data['name'],\n        email=data['email'],\n        password=data['password']\n    )\n    db.session.add(user)\n    db.session.commit()\n    return jsonify(user.to_dict()), 201\n```\n\nList all issues with severity and fix suggestions.",
+  "context_files": [],
+  "expected_artifacts": [],
+  "scoring": {
+    "type": "llm_judge",
+    "test_command": "",
+    "pass_threshold": 0.0
+  },
+  "created": "2026-07-01",
+  "version": "1.0"
+}

@@ -1,0 +1,42 @@
+{
+  "id": "L3-PROJECT-001-L3-PROJECT-001-S2",
+  "layer": "L3",
+  "dimensions": [
+    "D2",
+    "D4",
+    "D6"
+  ],
+  "sub_dimensions": [
+    "D1",
+    "D3",
+    "D5"
+  ],
+  "language": "python",
+  "difficulty": 4,
+  "estimated_time_min": 90,
+  "tags": [
+    "memory",
+    "multi-session",
+    "api",
+    "iteration"
+  ],
+  "sandbox": {
+    "image": "python",
+    "dependencies": [
+      "pytest",
+      "flask",
+      "sqlalchemy",
+      "pyjwt"
+    ],
+    "network": "none"
+  },
+  "prompt_template": "# Project: Mini E-Commerce API ！ Session 2 of 3\n\nContinue from where you left off. The project should have:\n- Flask app with product CRUD endpoints (in-memory)\n- `test_app.py` with tests\n- `DESIGN.md` with your design notes\n\nNEW tasks:\n1. Add JWT authentication middleware ！ protect all `/products` routes\n2. Create `POST /auth/register` and `POST /auth/login` endpoints\n3. Switch from in-memory storage to SQLite using SQLAlchemy\n4. Create a `models.py` with User and Product models\n5. Update `DESIGN.md` with auth and database design decisions\n6. Update all tests ！ they must still pass\n7. Add `requirements.txt` with flask, sqlalchemy, pyjwt\n\nThe test from session 1 should still work after your changes ！ this verifies you maintained backward compatibility.",
+  "context_files": [],
+  "expected_artifacts": [],
+  "scoring": {
+    "type": "llm_judge",
+    "pass_threshold": 0.65
+  },
+  "created": "2026-07-15",
+  "version": "1.0"
+}

@@ -1,0 +1,48 @@
+{
+  "id": "L2-SCENARIO-003",
+  "layer": "L2",
+  "dimensions": [
+    "D1",
+    "D2",
+    "D3",
+    "D5"
+  ],
+  "sub_dimensions": [
+    "D4",
+    "D6"
+  ],
+  "language": "python",
+  "difficulty": 3,
+  "estimated_time_min": 45,
+  "tags": [
+    "frontend",
+    "form",
+    "react"
+  ],
+  "sandbox": {
+    "image": "python",
+    "dependencies": [
+      "pytest",
+      "pyjwt",
+      "flask"
+    ],
+    "network": "none"
+  },
+  "prompt_template": "# Task: Build a Signup Form Component\n\nIn the provided React project, implement `src/SignupForm.jsx` that:\n\n1. Has fields: `username` (3-20 chars, alphanumeric), `email` (valid email format), `password` (min 8 chars, must contain 1 uppercase + 1 digit), `confirm_password` (must match)\n2. Shows inline validation errors below each field on blur\n3. Submit button disabled until all validations pass\n4. On submit, calls `props.onSubmit({username, email, password})`\n5. Shows a loading spinner while submitting (controlled by `props.loading`)\n6. Displays `props.error` as a banner if present\n\nDeliverables: `src/SignupForm.jsx` and `src/SignupForm.test.jsx`.",
+  "context_files": [
+    "context\\src\\App.jsx",
+    "context\\src\\SignupForm.jsx",
+    "context\\package.json",
+    "context\\README.md"
+  ],
+  "expected_artifacts": [
+    "src/SignupForm.jsx",
+    "src/SignupForm.test.jsx"
+  ],
+  "scoring": {
+    "type": "llm_judge",
+    "pass_threshold": 0.7
+  },
+  "created": "2026-07-10",
+  "version": "1.0"
+}

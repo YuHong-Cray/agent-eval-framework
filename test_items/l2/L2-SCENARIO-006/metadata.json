@@ -1,0 +1,48 @@
+{
+  "id": "L2-SCENARIO-006",
+  "layer": "L2",
+  "dimensions": [
+    "D1",
+    "D2",
+    "D3",
+    "D5"
+  ],
+  "sub_dimensions": [
+    "D4",
+    "D6"
+  ],
+  "language": "python",
+  "difficulty": 4,
+  "estimated_time_min": 45,
+  "tags": [
+    "scraping",
+    "cache",
+    "requests"
+  ],
+  "sandbox": {
+    "image": "python",
+    "dependencies": [
+      "pytest",
+      "flask",
+      "click",
+      "requests"
+    ],
+    "network": "whitelist"
+  },
+  "prompt_template": "# Task: Build a Web Scraper with Caching\n\nCreate `scraper.py` that:\n\n1. Accepts a URL as CLI argument\n2. Fetches the page HTML (using `requests` or `httpx`)\n3. Extracts all `<a href=\"...\">` links and their text\n4. Caches results to `.scraper_cache/{hash}.json` ¡ª if the same URL is requested within 1 hour, return cached data instead of re-fetching\n5. Implements exponential backoff retry (3 attempts, 1s/2s/4s delays) on connection errors\n6. Respects robots.txt (skip URL if Disallowed)\n7. Outputs results as JSON: {\"url\":\"...\", \"links\": [{\"href\":\"...\", \"text\":\"...\"}], \"cached\": bool, \"fetched_at\": \"...\"}\n\nDeliverables: `scraper.py`, `test_scraper.py`.",
+  "context_files": [
+    "context\\scraper.py",
+    "context\\requirements.txt",
+    "context\\README.md"
+  ],
+  "expected_artifacts": [
+    "scraper.py",
+    "test_scraper.py"
+  ],
+  "scoring": {
+    "type": "llm_judge",
+    "pass_threshold": 0.7
+  },
+  "created": "2026-07-10",
+  "version": "1.0"
+}

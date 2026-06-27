@@ -1,0 +1,48 @@
+{
+  "id": "L2-SCENARIO-005",
+  "layer": "L2",
+  "dimensions": [
+    "D1",
+    "D2",
+    "D3",
+    "D5"
+  ],
+  "sub_dimensions": [
+    "D4",
+    "D6"
+  ],
+  "language": "python",
+  "difficulty": 3,
+  "estimated_time_min": 45,
+  "tags": [
+    "cli",
+    "click",
+    "tooling"
+  ],
+  "sandbox": {
+    "image": "python",
+    "dependencies": [
+      "pytest",
+      "flask",
+      "click",
+      "requests"
+    ],
+    "network": "whitelist"
+  },
+  "prompt_template": "# Task: Build a CLI Task Manager\n\nCreate a Python CLI tool `tasker.py` using the `click` library with these subcommands:\n\n1. `tasker add <title>` ！ add a task with auto-generated UUID, status 'todo', created_at timestamp. Print the created task as JSON.\n2. `tasker list [--status todo|done|all]` ！ list tasks filtered by status (default: all), formatted as a table\n3. `tasker done <task_id>` ！ mark a task as done. Print error if task_id not found.\n4. `tasker delete <task_id>` ！ delete a task. Print confirmation.\n5. Tasks are persisted to `tasks.json` in the current directory.\n\nDeliverables: `tasker.py` (standalone, runnable with `python tasker.py`), `test_tasker.py` with at least 5 test cases.",
+  "context_files": [
+    "context\\tasker.py",
+    "context\\requirements.txt",
+    "context\\README.md"
+  ],
+  "expected_artifacts": [
+    "tasker.py",
+    "test_tasker.py"
+  ],
+  "scoring": {
+    "type": "llm_judge",
+    "pass_threshold": 0.7
+  },
+  "created": "2026-07-10",
+  "version": "1.0"
+}

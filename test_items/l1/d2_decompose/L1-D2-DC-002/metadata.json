@@ -1,0 +1,30 @@
+{
+  "id": "L1-D2-DC-002",
+  "layer": "L1",
+  "dimensions": [
+    "D2"
+  ],
+  "sub_dimensions": [],
+  "language": "any",
+  "difficulty": 1,
+  "estimated_time_min": 5,
+  "tags": [
+    "decompose",
+    "simple"
+  ],
+  "sandbox": {
+    "image": "python",
+    "dependencies": [],
+    "network": "none"
+  },
+  "prompt_template": "Decompose into subtasks:\n\"Create a Python script that reads a CSV file and prints the row count.\"\nOutput JSON tree format.",
+  "context_files": [],
+  "expected_artifacts": [],
+  "scoring": {
+    "type": "tree_sim",
+    "expected_tree": "{\"task\": \"Create CSV row counter script\", \"subtasks\": [{\"task\": \"Read CSV file path from args\", \"subtasks\": []}, {\"task\": \"Parse CSV rows\", \"subtasks\": []}, {\"task\": \"Count and print row count\", \"subtasks\": []}]}",
+    "tree_threshold": 0.6
+  },
+  "created": "2026-07-01",
+  "version": "1.0"
+}

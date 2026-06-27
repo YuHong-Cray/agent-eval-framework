@@ -1,0 +1,4 @@
+[
+  "count += 1 is not thread-safe \u2014 race condition",
+  "Use threading.Lock or atomic operations"
+]

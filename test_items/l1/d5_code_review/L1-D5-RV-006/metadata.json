@@ -1,0 +1,31 @@
+{
+  "id": "L1-D5-RV-006",
+  "layer": "L1",
+  "dimensions": [
+    "D5"
+  ],
+  "sub_dimensions": [],
+  "language": "python",
+  "difficulty": 4,
+  "estimated_time_min": 24,
+  "tags": [
+    "review",
+    "security",
+    "crypto"
+  ],
+  "sandbox": {
+    "image": "python",
+    "dependencies": [],
+    "network": "none"
+  },
+  "prompt_template": "Review this auth module for issues:\n\n```python\nimport hashlib\nimport base64\n\nSECRET = 'my-secret-key'\n\ndef generate_token(user_id: int) -> str:\n    payload = f'{user_id}:{SECRET}'\n    return base64.b64encode(payload.encode()).decode()\n\ndef validate_token(token: str) -> int | None:\n    try:\n        payload = base64.b64decode(token).decode()\n        user_id, secret = payload.split(':')\n        if secret == SECRET:\n            return int(user_id)\n    except:\n        pass\n    return None\n```\n\nList all issues with severity and suggested fix.",
+  "context_files": [],
+  "expected_artifacts": [],
+  "scoring": {
+    "type": "llm_judge",
+    "test_command": "",
+    "pass_threshold": 0.0
+  },
+  "created": "2026-07-01",
+  "version": "1.0"
+}

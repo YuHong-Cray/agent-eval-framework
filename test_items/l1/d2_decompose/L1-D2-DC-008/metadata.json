@@ -1,0 +1,30 @@
+{
+  "id": "L1-D2-DC-008",
+  "layer": "L1",
+  "dimensions": [
+    "D2"
+  ],
+  "sub_dimensions": [],
+  "language": "any",
+  "difficulty": 5,
+  "estimated_time_min": 25,
+  "tags": [
+    "decompose",
+    "fullstack"
+  ],
+  "sandbox": {
+    "image": "python",
+    "dependencies": [],
+    "network": "none"
+  },
+  "prompt_template": "Decompose into subtasks:\n\"Build a real-time collaborative text editor with WebSocket sync, operational transform, user presence, and version history.\"\nOutput JSON tree.",
+  "context_files": [],
+  "expected_artifacts": [],
+  "scoring": {
+    "type": "tree_sim",
+    "expected_tree": "{\"task\": \"Build collaborative text editor\", \"subtasks\": [{\"task\": \"Design document model and OT algorithm\", \"subtasks\": []}, {\"task\": \"Implement WebSocket server\", \"subtasks\": []}, {\"task\": \"Build text editor UI component\", \"subtasks\": []}, {\"task\": \"Implement operational transform engine\", \"subtasks\": []}, {\"task\": \"Add user presence system\", \"subtasks\": []}, {\"task\": \"Implement version history storage\", \"subtasks\": []}, {\"task\": \"Add conflict resolution\", \"subtasks\": []}, {\"task\": \"Build version diff viewer\", \"subtasks\": []}, {\"task\": \"Write integration tests\", \"subtasks\": []}]}",
+    "tree_threshold": 0.6
+  },
+  "created": "2026-07-01",
+  "version": "1.0"
+}

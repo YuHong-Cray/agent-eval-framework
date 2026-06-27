@@ -1,0 +1,47 @@
+{
+  "id": "L2-SCENARIO-002",
+  "layer": "L2",
+  "dimensions": [
+    "D1",
+    "D2",
+    "D3",
+    "D5"
+  ],
+  "sub_dimensions": [
+    "D4",
+    "D6"
+  ],
+  "language": "python",
+  "difficulty": 3,
+  "estimated_time_min": 45,
+  "tags": [
+    "data",
+    "migration",
+    "validation"
+  ],
+  "sandbox": {
+    "image": "python",
+    "dependencies": [
+      "pytest",
+      "pyjwt",
+      "flask"
+    ],
+    "network": "none"
+  },
+  "prompt_template": "# Task: Data Migration Script\n\nIn the provided project, there are two JSON data files: `old_users.json` (legacy format) and `new_users_schema.json` (target schema).\n\nWrite `migrate.py` that:\n\n1. Reads `old_users.json` which has flat user records with fields: `id`, `first_name`, `last_name`, `email`, `created`\n2. Transforms each record to match `new_users_schema.json`: `id`, `full_name` (first + last), `email` (validated), `profile` (object with `created_at`), `active` (default true)\n3. Validates that emails contain '@' ¡ª skip and log invalid records\n4. Writes output to `new_users.json`\n5. Prints a summary: 'Migrated X users, skipped Y invalid'\n\nDeliverables: `migrate.py` and `test_migrate.py`.",
+  "context_files": [
+    "context\\old_users.json",
+    "context\\new_users_schema.json",
+    "context\\README.md"
+  ],
+  "expected_artifacts": [
+    "migrate.py",
+    "test_migrate.py"
+  ],
+  "scoring": {
+    "type": "llm_judge",
+    "pass_threshold": 0.7
+  },
+  "created": "2026-07-10",
+  "version": "1.0"
+}

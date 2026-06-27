@@ -1,0 +1,38 @@
+{
+  "id": "L1-D3-CH-004",
+  "layer": "L1",
+  "dimensions": [
+    "D3"
+  ],
+  "sub_dimensions": [],
+  "language": "any",
+  "difficulty": 4,
+  "estimated_time_min": 12,
+  "tags": [
+    "chain",
+    "list-read-execute"
+  ],
+  "sandbox": {
+    "image": "python",
+    "dependencies": [],
+    "network": "none"
+  },
+  "prompt_template": "List files in `/project/data/`, read the first `.csv` file found, then run the Python script `/project/scripts/process.py` with that filename as an argument. Use an LS/Glob tool ¡ú Read ¡ú Bash sequence.",
+  "context_files": [],
+  "expected_artifacts": [],
+  "scoring": {
+    "type": "tool_match",
+    "tool_sequence": [
+      "Glob",
+      "Read",
+      "Bash"
+    ],
+    "key_params": [
+      "pattern",
+      "file_path",
+      "command"
+    ]
+  },
+  "created": "2026-07-01",
+  "version": "1.0"
+}

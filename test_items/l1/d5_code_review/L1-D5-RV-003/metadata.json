@@ -1,0 +1,30 @@
+{
+  "id": "L1-D5-RV-003",
+  "layer": "L1",
+  "dimensions": [
+    "D5"
+  ],
+  "sub_dimensions": [],
+  "language": "python",
+  "difficulty": 2,
+  "estimated_time_min": 12,
+  "tags": [
+    "review",
+    "performance"
+  ],
+  "sandbox": {
+    "image": "python",
+    "dependencies": [],
+    "network": "none"
+  },
+  "prompt_template": "Review for issues:\n\n```python\ndef find_user(users: list[dict], email: str) -> dict | None:\n    for user in users:\n        if user['email'] == email:\n            return user\n    return None\n```\n\nContext: This function is called in a loop over 100k users repeatedly.\nList issues with severity and suggested fix.",
+  "context_files": [],
+  "expected_artifacts": [],
+  "scoring": {
+    "type": "llm_judge",
+    "test_command": "",
+    "pass_threshold": 0.0
+  },
+  "created": "2026-07-01",
+  "version": "1.0"
+}

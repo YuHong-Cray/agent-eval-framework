@@ -1,0 +1,8 @@
+[
+  "Hardcoded secret \u2014 use env var or config",
+  "No cryptographic signing \u2014 token is forgeable (just base64)",
+  "Use JWT or HMAC instead of base64 encoding",
+  "Bare except hides all errors",
+  "No token expiration \u2014 tokens valid forever",
+  "hashlib imported but unused"
+]

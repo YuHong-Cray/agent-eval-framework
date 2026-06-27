@@ -1,0 +1,36 @@
+{
+  "id": "L1-D1-PY-006",
+  "layer": "L1",
+  "dimensions": [
+    "D1"
+  ],
+  "sub_dimensions": [],
+  "language": "python",
+  "difficulty": 2,
+  "estimated_time_min": 6,
+  "tags": [
+    "string",
+    "palindrome"
+  ],
+  "sandbox": {
+    "image": "python",
+    "dependencies": [
+      "pytest"
+    ],
+    "network": "none"
+  },
+  "prompt_template": "Implement `is_palindrome(s: str) -> bool` in `main.py`.\nReturn True if the string reads the same forward/backward.\nIgnore case and non-alphanumeric characters.\nExample: 'A man, a plan, a canal: Panama' -> True",
+  "context_files": [
+    "context/main.py"
+  ],
+  "expected_artifacts": [
+    "main.py"
+  ],
+  "scoring": {
+    "type": "unit_test",
+    "test_command": "python -m pytest judge/test_main.py -v",
+    "pass_threshold": 0.85
+  },
+  "created": "2026-07-01",
+  "version": "1.0"
+}

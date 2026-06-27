@@ -1,0 +1,36 @@
+{
+  "id": "L1-D1-PY-010",
+  "layer": "L1",
+  "dimensions": [
+    "D1"
+  ],
+  "sub_dimensions": [],
+  "language": "python",
+  "difficulty": 4,
+  "estimated_time_min": 12,
+  "tags": [
+    "data-structure",
+    "cache"
+  ],
+  "sandbox": {
+    "image": "python",
+    "dependencies": [
+      "pytest"
+    ],
+    "network": "none"
+  },
+  "prompt_template": "Implement an LRU Cache class in `main.py`.\n`LRUCache(capacity: int)` ¡ª initialize with capacity.\n`get(key: int) -> int` ¡ª return value or -1 if not found.\n`put(key: int, value: int) -> None` ¡ª insert/update, evict LRU if full.\nBoth get and put must be O(1).",
+  "context_files": [
+    "context/main.py"
+  ],
+  "expected_artifacts": [
+    "main.py"
+  ],
+  "scoring": {
+    "type": "unit_test",
+    "test_command": "python -m pytest judge/test_main.py -v",
+    "pass_threshold": 0.85
+  },
+  "created": "2026-07-01",
+  "version": "1.0"
+}

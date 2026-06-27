@@ -1,0 +1,23 @@
+[
+  {
+    "id": 1,
+    "first_name": "Alice",
+    "last_name": "Smith",
+    "email": "alice@example.com",
+    "created": "2024-01-15"
+  },
+  {
+    "id": 2,
+    "first_name": "Bob",
+    "last_name": "Jones",
+    "email": "bob-invalid",
+    "created": "2024-02-20"
+  },
+  {
+    "id": 3,
+    "first_name": "Charlie",
+    "last_name": "Brown",
+    "email": "charlie@test.org",
+    "created": "2024-03-10"
+  }
+]

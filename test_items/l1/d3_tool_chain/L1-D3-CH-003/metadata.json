@@ -1,0 +1,37 @@
+{
+  "id": "L1-D3-CH-003",
+  "layer": "L1",
+  "dimensions": [
+    "D3"
+  ],
+  "sub_dimensions": [],
+  "language": "any",
+  "difficulty": 4,
+  "estimated_time_min": 12,
+  "tags": [
+    "chain",
+    "write-test"
+  ],
+  "sandbox": {
+    "image": "python",
+    "dependencies": [],
+    "network": "none"
+  },
+  "prompt_template": "Write a new Python file `/project/src/calculator.py` with a `def add(a, b): return a + b` function, then write a test file at `/project/tests/test_calculator.py`, then run pytest on it. Use Write ¡ú Write ¡ú Bash in sequence.",
+  "context_files": [],
+  "expected_artifacts": [],
+  "scoring": {
+    "type": "tool_match",
+    "tool_sequence": [
+      "Write",
+      "Write",
+      "Bash"
+    ],
+    "key_params": [
+      "file_path",
+      "command"
+    ]
+  },
+  "created": "2026-07-01",
+  "version": "1.0"
+}

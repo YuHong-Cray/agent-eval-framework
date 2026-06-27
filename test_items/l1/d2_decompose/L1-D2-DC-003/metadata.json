@@ -1,0 +1,30 @@
+{
+  "id": "L1-D2-DC-003",
+  "layer": "L1",
+  "dimensions": [
+    "D2"
+  ],
+  "sub_dimensions": [],
+  "language": "any",
+  "difficulty": 2,
+  "estimated_time_min": 10,
+  "tags": [
+    "decompose",
+    "web"
+  ],
+  "sandbox": {
+    "image": "python",
+    "dependencies": [],
+    "network": "none"
+  },
+  "prompt_template": "Decompose into subtasks with dependencies:\n\"Build a login page with email/password fields and a submit button.\"\nOutput JSON tree format.",
+  "context_files": [],
+  "expected_artifacts": [],
+  "scoring": {
+    "type": "tree_sim",
+    "expected_tree": "{\"task\": \"Build login page\", \"subtasks\": [{\"task\": \"Create HTML form\", \"subtasks\": []}, {\"task\": \"Add CSS styling\", \"subtasks\": []}, {\"task\": \"Implement client-side validation\", \"subtasks\": []}, {\"task\": \"Connect to backend auth API\", \"subtasks\": []}, {\"task\": \"Handle error states\", \"subtasks\": []}]}",
+    "tree_threshold": 0.6
+  },
+  "created": "2026-07-01",
+  "version": "1.0"
+}

@@ -1,0 +1,5 @@
+[
+  "File not closed \u2014 resource leak, use context manager",
+  "No FileNotFoundError handling",
+  "No JSON decode error handling"
+]

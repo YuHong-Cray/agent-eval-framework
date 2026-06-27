@@ -1,0 +1,30 @@
+{
+  "id": "L1-D2-DC-005",
+  "layer": "L1",
+  "dimensions": [
+    "D2"
+  ],
+  "sub_dimensions": [],
+  "language": "any",
+  "difficulty": 3,
+  "estimated_time_min": 15,
+  "tags": [
+    "decompose",
+    "optimize"
+  ],
+  "sandbox": {
+    "image": "python",
+    "dependencies": [],
+    "network": "none"
+  },
+  "prompt_template": "Decompose into subtasks:\n\"The homepage loads slowly. Investigate causes and optimize to under 2 seconds.\"\nOutput JSON tree.",
+  "context_files": [],
+  "expected_artifacts": [],
+  "scoring": {
+    "type": "tree_sim",
+    "expected_tree": "{\"task\": \"Optimize homepage load time\", \"subtasks\": [{\"task\": \"Profile page load performance\", \"subtasks\": []}, {\"task\": \"Identify slow queries\", \"subtasks\": []}, {\"task\": \"Add database indexes\", \"subtasks\": []}, {\"task\": \"Implement caching\", \"subtasks\": []}, {\"task\": \"Optimize asset delivery\", \"subtasks\": []}, {\"task\": \"Verify performance improvement\", \"subtasks\": []}]}",
+    "tree_threshold": 0.6
+  },
+  "created": "2026-07-01",
+  "version": "1.0"
+}

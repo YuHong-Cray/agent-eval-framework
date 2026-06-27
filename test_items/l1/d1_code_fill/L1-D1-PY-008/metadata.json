@@ -1,0 +1,36 @@
+{
+  "id": "L1-D1-PY-008",
+  "layer": "L1",
+  "dimensions": [
+    "D1"
+  ],
+  "sub_dimensions": [],
+  "language": "python",
+  "difficulty": 3,
+  "estimated_time_min": 9,
+  "tags": [
+    "recursion",
+    "list"
+  ],
+  "sandbox": {
+    "image": "python",
+    "dependencies": [
+      "pytest"
+    ],
+    "network": "none"
+  },
+  "prompt_template": "Implement `flatten(nested: list) -> list` in `main.py`.\nFlatten arbitrarily nested lists into a single flat list.\nExample: [1, [2, [3, 4]], 5] -> [1,2,3,4,5]",
+  "context_files": [
+    "context/main.py"
+  ],
+  "expected_artifacts": [
+    "main.py"
+  ],
+  "scoring": {
+    "type": "unit_test",
+    "test_command": "python -m pytest judge/test_main.py -v",
+    "pass_threshold": 0.85
+  },
+  "created": "2026-07-01",
+  "version": "1.0"
+}

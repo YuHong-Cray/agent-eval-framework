@@ -1,0 +1,36 @@
+{
+  "id": "L1-D5-PY-004",
+  "layer": "L1",
+  "dimensions": [
+    "D5"
+  ],
+  "sub_dimensions": [],
+  "language": "python",
+  "difficulty": 2,
+  "estimated_time_min": 10,
+  "tags": [
+    "math",
+    "division"
+  ],
+  "sandbox": {
+    "image": "python",
+    "dependencies": [
+      "pytest"
+    ],
+    "network": "none"
+  },
+  "prompt_template": "The function `average` in `main.py` returns wrong results for integer lists. Fix the bug.\nExample: [1, 2, 3, 4] -> 2.5",
+  "context_files": [
+    "context/main.py"
+  ],
+  "expected_artifacts": [
+    "main.py"
+  ],
+  "scoring": {
+    "type": "unit_test",
+    "test_command": "python -m pytest judge/test_main.py -v",
+    "pass_threshold": 0.85
+  },
+  "created": "2026-07-01",
+  "version": "1.0"
+}

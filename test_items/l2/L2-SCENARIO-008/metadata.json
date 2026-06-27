@@ -1,0 +1,48 @@
+{
+  "id": "L2-SCENARIO-008",
+  "layer": "L2",
+  "dimensions": [
+    "D1",
+    "D2",
+    "D3",
+    "D5"
+  ],
+  "sub_dimensions": [
+    "D4",
+    "D6"
+  ],
+  "language": "python",
+  "difficulty": 3,
+  "estimated_time_min": 45,
+  "tags": [
+    "api",
+    "rate-limit",
+    "middleware"
+  ],
+  "sandbox": {
+    "image": "python",
+    "dependencies": [
+      "pytest",
+      "flask",
+      "click",
+      "requests"
+    ],
+    "network": "whitelist"
+  },
+  "prompt_template": "# Task: Token Bucket Rate Limiter\n\nImplement `rate_limiter.py` that provides a token bucket rate limiter:\n\n1. `RateLimiter(capacity: int, refill_rate: float)` ¡ª capacity is max tokens, refill_rate is tokens per second\n2. `allow(key: str) -> bool` ¡ª return True if request allowed, False if rate limited. Each call consumes 1 token.\n3. Tokens refill gradually based on elapsed time since last refill\n4. Implement `RateLimitMiddleware` as a Flask middleware that:\n   - Limits per IP address (use `request.remote_addr`)\n   - Returns 429 with `{\"error\":\"rate_limited\",\"retry_after\":X}` when limited\n   - Adds `X-RateLimit-Remaining` and `X-RateLimit-Limit` headers\n5. Must be thread-safe (use `threading.Lock`)\n\nDeliverables: `rate_limiter.py`, `test_rate_limiter.py`.",
+  "context_files": [
+    "context\\rate_limiter.py",
+    "context\\requirements.txt",
+    "context\\README.md"
+  ],
+  "expected_artifacts": [
+    "rate_limiter.py",
+    "test_rate_limiter.py"
+  ],
+  "scoring": {
+    "type": "llm_judge",
+    "pass_threshold": 0.7
+  },
+  "created": "2026-07-10",
+  "version": "1.0"
+}

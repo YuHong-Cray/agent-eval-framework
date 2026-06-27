@@ -1,0 +1,41 @@
+{
+  "id": "L3-PROJECT-002-L3-PROJECT-002-S2",
+  "layer": "L3",
+  "dimensions": [
+    "D2",
+    "D4",
+    "D6"
+  ],
+  "sub_dimensions": [
+    "D1",
+    "D3",
+    "D5"
+  ],
+  "language": "python",
+  "difficulty": 5,
+  "estimated_time_min": 90,
+  "tags": [
+    "multi-agent",
+    "refactor",
+    "coordination"
+  ],
+  "sandbox": {
+    "image": "python",
+    "dependencies": [
+      "pytest",
+      "flask",
+      "sqlalchemy",
+      "pyjwt"
+    ],
+    "network": "none"
+  },
+  "prompt_template": "# Project: Library Management System Refactor ！ Session 2 of 2\n\nYou MUST use sub-agents (Task/Agent dispatching) for this session.\n\nSplit the monolithic `library.py` into these modules, each handled by a sub-agent:\n\n1. **Sub-Agent A: `books.py`** ！ Book class, BookRepository (add/find/search/list)\n2. **Sub-Agent B: `members.py`** ！ Member class, MemberRepository\n3. **Sub-Agent C: `loans.py`** ！ Loan class, LoanService (borrow/return/get_overdue/get_member_loans)\n4. **Sub-Agent D: `reporting.py`** ！ ReportService (generates reports using the other modules)\n5. **Main: `library.py`** ！ Updated to import and coordinate the modules\n\nRequirements:\n- Each sub-agent produces its own file with tests\n- All existing tests in `test_library.py` must still pass AFTER the refactor\n- Create a `REFACTOR_SUMMARY.md` documenting which sub-agent handled what and how the modules communicate\n\nThis validates your multi-agent coordination: dispatching, result merging, and consistency checking across agents.",
+  "context_files": [],
+  "expected_artifacts": [],
+  "scoring": {
+    "type": "llm_judge",
+    "pass_threshold": 0.65
+  },
+  "created": "2026-07-15",
+  "version": "1.0"
+}

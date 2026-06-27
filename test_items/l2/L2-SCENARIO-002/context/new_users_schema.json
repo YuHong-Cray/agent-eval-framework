@@ -1,0 +1,25 @@
+{
+  "type": "object",
+  "properties": {
+    "id": {
+      "type": "integer"
+    },
+    "full_name": {
+      "type": "string"
+    },
+    "email": {
+      "type": "string"
+    },
+    "profile": {
+      "type": "object",
+      "properties": {
+        "created_at": {
+          "type": "string"
+        }
+      }
+    },
+    "active": {
+      "type": "boolean"
+    }
+  }
+}

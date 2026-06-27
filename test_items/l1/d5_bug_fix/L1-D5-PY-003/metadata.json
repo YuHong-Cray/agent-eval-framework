@@ -1,0 +1,36 @@
+{
+  "id": "L1-D5-PY-003",
+  "layer": "L1",
+  "dimensions": [
+    "D5"
+  ],
+  "sub_dimensions": [],
+  "language": "python",
+  "difficulty": 2,
+  "estimated_time_min": 10,
+  "tags": [
+    "default-arg",
+    "list"
+  ],
+  "sandbox": {
+    "image": "python",
+    "dependencies": [
+      "pytest"
+    ],
+    "network": "none"
+  },
+  "prompt_template": "The function `add_item` in `main.py` has a subtle bug related to Python default arguments. Find and fix it so that tests pass.",
+  "context_files": [
+    "context/main.py"
+  ],
+  "expected_artifacts": [
+    "main.py"
+  ],
+  "scoring": {
+    "type": "unit_test",
+    "test_command": "python -m pytest judge/test_main.py -v",
+    "pass_threshold": 0.85
+  },
+  "created": "2026-07-01",
+  "version": "1.0"
+}

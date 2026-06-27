@@ -1,0 +1,36 @@
+{
+  "id": "L1-D1-PY-011",
+  "layer": "L1",
+  "dimensions": [
+    "D1"
+  ],
+  "sub_dimensions": [],
+  "language": "python",
+  "difficulty": 4,
+  "estimated_time_min": 12,
+  "tags": [
+    "parsing",
+    "string"
+  ],
+  "sandbox": {
+    "image": "python",
+    "dependencies": [
+      "pytest"
+    ],
+    "network": "none"
+  },
+  "prompt_template": "Implement `parse_json_value(s: str) -> Any` in `main.py`.\nParse a simplified JSON value: null, bool (true/false), integer, string (double-quoted with \\\\ escapes for \\\" and \\\\), array ([...]), or object ({...}). Keys are always double-quoted strings.\nDo NOT use json.loads(). Return the parsed Python object.\nExample: '{\"a\": 1, \"b\": [2, \"hello\"]}' -> {\"a\": 1, \"b\": [2, \"hello\"]}",
+  "context_files": [
+    "context/main.py"
+  ],
+  "expected_artifacts": [
+    "main.py"
+  ],
+  "scoring": {
+    "type": "unit_test",
+    "test_command": "python -m pytest judge/test_main.py -v",
+    "pass_threshold": 0.85
+  },
+  "created": "2026-07-01",
+  "version": "1.0"
+}

@@ -1,0 +1,6 @@
+[
+  "Password stored in plaintext \u2014 must hash before storing",
+  "No input validation \u2014 blank names, invalid emails",
+  "No duplicate email check \u2014 unique constraint violation",
+  "No error handling \u2014 missing fields cause KeyError"
+]

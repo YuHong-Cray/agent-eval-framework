@@ -1,0 +1,36 @@
+{
+  "id": "L1-D5-PY-007",
+  "layer": "L1",
+  "dimensions": [
+    "D5"
+  ],
+  "sub_dimensions": [],
+  "language": "python",
+  "difficulty": 3,
+  "estimated_time_min": 15,
+  "tags": [
+    "closure",
+    "scope"
+  ],
+  "sandbox": {
+    "image": "python",
+    "dependencies": [
+      "pytest"
+    ],
+    "network": "none"
+  },
+  "prompt_template": "The function `make_multipliers` in `main.py` should return a list of functions that each multiply by a different number. Find and fix the closure bug.\nExample: [m(5) for m in make_multipliers()] should be [0, 5, 10]",
+  "context_files": [
+    "context/main.py"
+  ],
+  "expected_artifacts": [
+    "main.py"
+  ],
+  "scoring": {
+    "type": "unit_test",
+    "test_command": "python -m pytest judge/test_main.py -v",
+    "pass_threshold": 0.85
+  },
+  "created": "2026-07-01",
+  "version": "1.0"
+}

@@ -1,0 +1,37 @@
+{
+  "id": "L1-D5-PY-009",
+  "layer": "L1",
+  "dimensions": [
+    "D5"
+  ],
+  "sub_dimensions": [],
+  "language": "python",
+  "difficulty": 4,
+  "estimated_time_min": 20,
+  "tags": [
+    "resource",
+    "file",
+    "leak"
+  ],
+  "sandbox": {
+    "image": "python",
+    "dependencies": [
+      "pytest"
+    ],
+    "network": "none"
+  },
+  "prompt_template": "The function `read_file_lines` in `main.py` has a resource leak and may return wrong results on error. Fix all bugs.\nIt should read and return all lines from a text file.",
+  "context_files": [
+    "context/main.py"
+  ],
+  "expected_artifacts": [
+    "main.py"
+  ],
+  "scoring": {
+    "type": "unit_test",
+    "test_command": "python -m pytest judge/test_main.py -v",
+    "pass_threshold": 0.85
+  },
+  "created": "2026-07-01",
+  "version": "1.0"
+}

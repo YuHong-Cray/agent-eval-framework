@@ -1,0 +1,35 @@
+{
+  "id": "L1-D3-CH-001",
+  "layer": "L1",
+  "dimensions": [
+    "D3"
+  ],
+  "sub_dimensions": [],
+  "language": "any",
+  "difficulty": 3,
+  "estimated_time_min": 9,
+  "tags": [
+    "chain",
+    "read-edit"
+  ],
+  "sandbox": {
+    "image": "python",
+    "dependencies": [],
+    "network": "none"
+  },
+  "prompt_template": "Read `/project/README.md`, then update it by replacing all occurrences of `2025` with `2026`. Use Read then Edit tools in order.",
+  "context_files": [],
+  "expected_artifacts": [],
+  "scoring": {
+    "type": "tool_match",
+    "tool_sequence": [
+      "Read",
+      "Edit"
+    ],
+    "key_params": [
+      "file_path"
+    ]
+  },
+  "created": "2026-07-01",
+  "version": "1.0"
+}

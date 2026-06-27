@@ -1,0 +1,42 @@
+{
+  "id": "L3-PROJECT-001-L3-PROJECT-001-S3",
+  "layer": "L3",
+  "dimensions": [
+    "D2",
+    "D4",
+    "D6"
+  ],
+  "sub_dimensions": [
+    "D1",
+    "D3",
+    "D5"
+  ],
+  "language": "python",
+  "difficulty": 4,
+  "estimated_time_min": 90,
+  "tags": [
+    "memory",
+    "multi-session",
+    "api",
+    "iteration"
+  ],
+  "sandbox": {
+    "image": "python",
+    "dependencies": [
+      "pytest",
+      "flask",
+      "sqlalchemy",
+      "pyjwt"
+    ],
+    "network": "none"
+  },
+  "prompt_template": "# Project: Mini E-Commerce API ！ Session 3 of 3\n\nContinue from sessions 1-2. The project should have:\n- JWT auth with user registration/login\n- SQLite database with User and Product models\n- Product CRUD endpoints (protected)\n- Updated tests and DESIGN.md\n\nNEW tasks:\n1. Create `POST /orders` ！ authenticated user places an order (validate products exist and have sufficient stock)\n2. Create `GET /orders` ！ list current user's orders\n3. Create `GET /orders/<id>` ！ get order detail (only owner or admin)\n4. Add `GET /report/products` ！ report endpoint showing total sales per product\n5. Add `GET /report/revenue` ！ total revenue, total orders, average order value\n6. Update `DESIGN.md` with final architecture notes\n7. Ensure all existing tests still pass + add new tests for orders and reports\n\nFINAL: Your DESIGN.md should now document the complete architecture across all 3 sessions. This tests whether you maintained context.",
+  "context_files": [],
+  "expected_artifacts": [],
+  "scoring": {
+    "type": "llm_judge",
+    "pass_threshold": 0.65
+  },
+  "created": "2026-07-15",
+  "version": "1.0"
+}

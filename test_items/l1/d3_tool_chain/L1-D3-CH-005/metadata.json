@@ -1,0 +1,41 @@
+{
+  "id": "L1-D3-CH-005",
+  "layer": "L1",
+  "dimensions": [
+    "D3"
+  ],
+  "sub_dimensions": [],
+  "language": "any",
+  "difficulty": 5,
+  "estimated_time_min": 15,
+  "tags": [
+    "chain",
+    "complex-workflow"
+  ],
+  "sandbox": {
+    "image": "python",
+    "dependencies": [],
+    "network": "none"
+  },
+  "prompt_template": "Perform the following workflow in order:\n1. Search for all Python files that import `deprecated_lib`\n2. Read each file to understand its usage\n3. Replace `import deprecated_lib` with `import new_lib` in each file\n4. Run the test suite to verify nothing broke\nUse Grep ¡ú Read ¡ú Edit ¡ú Bash in exact sequence.",
+  "context_files": [],
+  "expected_artifacts": [],
+  "scoring": {
+    "type": "tool_match",
+    "tool_sequence": [
+      "Grep",
+      "Read",
+      "Edit",
+      "Bash"
+    ],
+    "key_params": [
+      "pattern",
+      "file_path",
+      "old_string",
+      "new_string",
+      "command"
+    ]
+  },
+  "created": "2026-07-01",
+  "version": "1.0"
+}

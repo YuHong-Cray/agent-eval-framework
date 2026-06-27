@@ -1,0 +1,30 @@
+{
+  "id": "L1-D2-DC-001",
+  "layer": "L1",
+  "dimensions": [
+    "D2"
+  ],
+  "sub_dimensions": [],
+  "language": "any",
+  "difficulty": 1,
+  "estimated_time_min": 5,
+  "tags": [
+    "decompose",
+    "simple"
+  ],
+  "sandbox": {
+    "image": "python",
+    "dependencies": [],
+    "network": "none"
+  },
+  "prompt_template": "Decompose this requirement into subtasks:\n\"Add a health-check endpoint GET /health that returns {\"status\": \"ok\"}\"\nOutput a JSON tree: {\"task\": \"<main>\", \"subtasks\": [{\"task\": \"<sub>\", \"subtasks\": []}]}",
+  "context_files": [],
+  "expected_artifacts": [],
+  "scoring": {
+    "type": "tree_sim",
+    "expected_tree": "{\"task\": \"Add health-check endpoint\", \"subtasks\": [{\"task\": \"Define route GET /health\", \"subtasks\": []}, {\"task\": \"Return JSON response\", \"subtasks\": []}, {\"task\": \"Test endpoint\", \"subtasks\": []}]}",
+    "tree_threshold": 0.6
+  },
+  "created": "2026-07-01",
+  "version": "1.0"
+}

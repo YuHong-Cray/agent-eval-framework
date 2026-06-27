@@ -1,0 +1,34 @@
+{
+  "id": "L1-D3-ST-003",
+  "layer": "L1",
+  "dimensions": [
+    "D3"
+  ],
+  "sub_dimensions": [],
+  "language": "any",
+  "difficulty": 2,
+  "estimated_time_min": 6,
+  "tags": [
+    "execution",
+    "tool-select"
+  ],
+  "sandbox": {
+    "image": "python",
+    "dependencies": [],
+    "network": "none"
+  },
+  "prompt_template": "Run the test suite located at `/project/tests/` using pytest. Use a shell/bash execution tool with parameter `command` set to `pytest /project/tests/ -v`.",
+  "context_files": [],
+  "expected_artifacts": [],
+  "scoring": {
+    "type": "tool_match",
+    "tool_sequence": [
+      "Bash"
+    ],
+    "key_params": [
+      "command"
+    ]
+  },
+  "created": "2026-07-01",
+  "version": "1.0"
+}

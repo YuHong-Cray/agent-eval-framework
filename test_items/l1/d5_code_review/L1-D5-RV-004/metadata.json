@@ -1,0 +1,30 @@
+{
+  "id": "L1-D5-RV-004",
+  "layer": "L1",
+  "dimensions": [
+    "D5"
+  ],
+  "sub_dimensions": [],
+  "language": "python",
+  "difficulty": 2,
+  "estimated_time_min": 12,
+  "tags": [
+    "review",
+    "concurrency"
+  ],
+  "sandbox": {
+    "image": "python",
+    "dependencies": [],
+    "network": "none"
+  },
+  "prompt_template": "Review for issues:\n\n```python\nclass Counter:\n    def __init__(self):\n        self.count = 0\n    def increment(self):\n        self.count += 1\n    def get(self):\n        return self.count\n```\n\nContext: Used by multiple threads in a web server.\nList issues with severity and suggested fix.",
+  "context_files": [],
+  "expected_artifacts": [],
+  "scoring": {
+    "type": "llm_judge",
+    "test_command": "",
+    "pass_threshold": 0.0
+  },
+  "created": "2026-07-01",
+  "version": "1.0"
+}

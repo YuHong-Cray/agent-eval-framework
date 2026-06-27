@@ -1,0 +1,34 @@
+{
+  "id": "L1-D3-ST-001",
+  "layer": "L1",
+  "dimensions": [
+    "D3"
+  ],
+  "sub_dimensions": [],
+  "language": "any",
+  "difficulty": 1,
+  "estimated_time_min": 3,
+  "tags": [
+    "file-read",
+    "tool-select"
+  ],
+  "sandbox": {
+    "image": "python",
+    "dependencies": [],
+    "network": "none"
+  },
+  "prompt_template": "You need to read the contents of the file `/project/src/config.py`. Use exactly one tool call with the correct tool name and parameter `file_path`.",
+  "context_files": [],
+  "expected_artifacts": [],
+  "scoring": {
+    "type": "tool_match",
+    "tool_sequence": [
+      "Read"
+    ],
+    "key_params": [
+      "file_path"
+    ]
+  },
+  "created": "2026-07-01",
+  "version": "1.0"
+}

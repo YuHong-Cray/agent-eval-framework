@@ -1,0 +1,36 @@
+{
+  "id": "L1-D1-PY-015",
+  "layer": "L1",
+  "dimensions": [
+    "D1"
+  ],
+  "sub_dimensions": [],
+  "language": "python",
+  "difficulty": 5,
+  "estimated_time_min": 15,
+  "tags": [
+    "algorithm",
+    "parsing"
+  ],
+  "sandbox": {
+    "image": "python",
+    "dependencies": [
+      "pytest"
+    ],
+    "network": "none"
+  },
+  "prompt_template": "Implement `evaluate_expression(expr: str) -> int` in `main.py`.\nEvaluate a string arithmetic expression containing +, -, *, /, parentheses, and non-negative integers. Follow standard precedence (*/ before +-).\nInteger division truncates toward zero. Do not use eval().\nExample: \"3 + 5 * 2\" -> 13",
+  "context_files": [
+    "context/main.py"
+  ],
+  "expected_artifacts": [
+    "main.py"
+  ],
+  "scoring": {
+    "type": "unit_test",
+    "test_command": "python -m pytest judge/test_main.py -v",
+    "pass_threshold": 0.85
+  },
+  "created": "2026-07-01",
+  "version": "1.0"
+}

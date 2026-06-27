@@ -1,0 +1,30 @@
+{
+  "id": "L1-D2-DC-006",
+  "layer": "L1",
+  "dimensions": [
+    "D2"
+  ],
+  "sub_dimensions": [],
+  "language": "any",
+  "difficulty": 4,
+  "estimated_time_min": 20,
+  "tags": [
+    "decompose",
+    "migration"
+  ],
+  "sandbox": {
+    "image": "python",
+    "dependencies": [],
+    "network": "none"
+  },
+  "prompt_template": "Decompose into subtasks:\n\"Migrate this monolith Express.js app to a microservices architecture with separate auth, users, and products services.\"\nOutput JSON tree.",
+  "context_files": [],
+  "expected_artifacts": [],
+  "scoring": {
+    "type": "tree_sim",
+    "expected_tree": "{\"task\": \"Migrate to microservices\", \"subtasks\": [{\"task\": \"Analyze current monolith structure\", \"subtasks\": []}, {\"task\": \"Design service boundaries and APIs\", \"subtasks\": []}, {\"task\": \"Extract auth service\", \"subtasks\": []}, {\"task\": \"Extract users service\", \"subtasks\": []}, {\"task\": \"Extract products service\", \"subtasks\": []}, {\"task\": \"Implement API gateway\", \"subtasks\": []}, {\"task\": \"Add inter-service communication\", \"subtasks\": []}, {\"task\": \"Update deployment pipeline\", \"subtasks\": []}]}",
+    "tree_threshold": 0.6
+  },
+  "created": "2026-07-01",
+  "version": "1.0"
+}

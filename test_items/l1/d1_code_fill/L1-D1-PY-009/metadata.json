@@ -1,0 +1,37 @@
+{
+  "id": "L1-D1-PY-009",
+  "layer": "L1",
+  "dimensions": [
+    "D1"
+  ],
+  "sub_dimensions": [],
+  "language": "python",
+  "difficulty": 3,
+  "estimated_time_min": 9,
+  "tags": [
+    "string",
+    "hash",
+    "grouping"
+  ],
+  "sandbox": {
+    "image": "python",
+    "dependencies": [
+      "pytest"
+    ],
+    "network": "none"
+  },
+  "prompt_template": "Implement `group_anagrams(words: list[str]) -> list[list[str]]` in `main.py`.\nGroup words that are anagrams of each other. Return groups in any order, words within each group sorted alphabetically.\nExample: ['eat','tea','tan','ate','nat','bat'] -> [['ate','eat','tea'],['bat'],['nat','tan']]",
+  "context_files": [
+    "context/main.py"
+  ],
+  "expected_artifacts": [
+    "main.py"
+  ],
+  "scoring": {
+    "type": "unit_test",
+    "test_command": "python -m pytest judge/test_main.py -v",
+    "pass_threshold": 0.85
+  },
+  "created": "2026-07-01",
+  "version": "1.0"
+}

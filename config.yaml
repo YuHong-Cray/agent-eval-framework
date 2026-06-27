@@ -1,0 +1,41 @@
+# eval_framework global configuration
+sandbox:
+  docker_host: "unix:///var/run/docker.sock"
+  default_image_python: "eval-sandbox-python:latest"
+  default_image_node: "eval-sandbox-node:latest"
+  default_image_go: "eval-sandbox-go:latest"
+  network_mode: "none"          # none | whitelist | open
+  max_concurrency: 4
+  timeout_default: 900           # 15 min default
+
+database:
+  url: "postgresql://eval:eval@localhost:5432/eval_framework"
+
+scoring:
+  l1:
+    pass_threshold: 0.85
+  l2_l3:
+    judge_model: "deepseek-v4-flash"
+    judge_api_base: "https://api.deepseek.com"
+    judge_max_retries: 3
+
+layers:
+  l1:
+    concurrency: "high"
+    retry: 1
+    timeout_minutes: 15
+  l2:
+    concurrency: "low"
+    retry: 0
+    timeout_minutes: 60
+  l3:
+    concurrency: "serial"
+    retry: 0
+    timeout_minutes: 120
+
+test_items:
+  registry_path: "test_items/registry.json"
+  random_seed: 42
+
+report:
+  output_dir: "reports/"

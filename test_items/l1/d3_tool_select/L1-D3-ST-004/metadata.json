@@ -1,0 +1,35 @@
+{
+  "id": "L1-D3-ST-004",
+  "layer": "L1",
+  "dimensions": [
+    "D3"
+  ],
+  "sub_dimensions": [],
+  "language": "any",
+  "difficulty": 2,
+  "estimated_time_min": 6,
+  "tags": [
+    "file-write",
+    "tool-select"
+  ],
+  "sandbox": {
+    "image": "python",
+    "dependencies": [],
+    "network": "none"
+  },
+  "prompt_template": "Create a new file `/project/src/utils.py` with the content `import os\\n\\ndef get_env(key): return os.getenv(key)`. Use a file write/create tool with parameters `file_path` and `content`.",
+  "context_files": [],
+  "expected_artifacts": [],
+  "scoring": {
+    "type": "tool_match",
+    "tool_sequence": [
+      "Write"
+    ],
+    "key_params": [
+      "file_path",
+      "content"
+    ]
+  },
+  "created": "2026-07-01",
+  "version": "1.0"
+}

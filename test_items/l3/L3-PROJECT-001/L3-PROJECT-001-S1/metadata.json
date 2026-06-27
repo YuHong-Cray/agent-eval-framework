@@ -1,0 +1,42 @@
+{
+  "id": "L3-PROJECT-001-L3-PROJECT-001-S1",
+  "layer": "L3",
+  "dimensions": [
+    "D2",
+    "D4",
+    "D6"
+  ],
+  "sub_dimensions": [
+    "D1",
+    "D3",
+    "D5"
+  ],
+  "language": "python",
+  "difficulty": 4,
+  "estimated_time_min": 90,
+  "tags": [
+    "memory",
+    "multi-session",
+    "api",
+    "iteration"
+  ],
+  "sandbox": {
+    "image": "python",
+    "dependencies": [
+      "pytest",
+      "flask",
+      "sqlalchemy",
+      "pyjwt"
+    ],
+    "network": "none"
+  },
+  "prompt_template": "# Project: Mini E-Commerce API ！ Session 1 of 3\n\nBuild the foundation of a mini e-commerce REST API using Flask:\n\n1. Create `app.py` with Flask app\n2. Implement `POST /products` ！ create a product with {name, price, stock}\n3. Implement `GET /products` ！ list all products\n4. Implement `GET /products/<id>` ！ get single product\n5. Store products in an in-memory list (will be upgraded to DB in session 2)\n6. Add input validation: name required, price > 0, stock >= 0\n7. Write `test_app.py` with pytest tests for all endpoints\n8. Create `DESIGN.md` documenting your API design decisions\n\nKEY: Remember your design choices ！ in session 2 you will add user auth and switch to a database. Your DESIGN.md will help you maintain context.",
+  "context_files": [],
+  "expected_artifacts": [],
+  "scoring": {
+    "type": "llm_judge",
+    "pass_threshold": 0.65
+  },
+  "created": "2026-07-15",
+  "version": "1.0"
+}

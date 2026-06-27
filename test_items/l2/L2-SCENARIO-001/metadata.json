@@ -1,0 +1,48 @@
+{
+  "id": "L2-SCENARIO-001",
+  "layer": "L2",
+  "dimensions": [
+    "D1",
+    "D2",
+    "D3",
+    "D5"
+  ],
+  "sub_dimensions": [
+    "D4",
+    "D6"
+  ],
+  "language": "python",
+  "difficulty": 3,
+  "estimated_time_min": 45,
+  "tags": [
+    "auth",
+    "middleware",
+    "api"
+  ],
+  "sandbox": {
+    "image": "python",
+    "dependencies": [
+      "pytest",
+      "pyjwt",
+      "flask"
+    ],
+    "network": "none"
+  },
+  "prompt_template": "# Task: Add JWT Authentication Middleware\n\nIn the provided Flask REST API project (`app.py`), implement JWT-based authentication middleware that:\n\n1. Validates a Bearer token from the `Authorization` header on every request to `/api/*` endpoints\n2. Returns 401 with `{\"error\": \"unauthorized\"}` for invalid/missing tokens\n3. Adds the decoded user_id to `request.user_id` for downstream handlers\n4. Tokens are signed with HS256 using a secret from env var `JWT_SECRET`\n5. Include a `/auth/login` endpoint that accepts `{\"username\":\"...\", \"password\":\"...\"}` and returns a JWT token if credentials match (hardcoded demo user: admin/admin123)\n\nDeliverables: updated `app.py`, `requirements.txt` with PyJWT, and `test_auth.py` with at least 3 test cases.",
+  "context_files": [
+    "context\\app.py",
+    "context\\requirements.txt",
+    "context\\README.md"
+  ],
+  "expected_artifacts": [
+    "app.py",
+    "requirements.txt",
+    "test_auth.py"
+  ],
+  "scoring": {
+    "type": "llm_judge",
+    "pass_threshold": 0.7
+  },
+  "created": "2026-07-10",
+  "version": "1.0"
+}

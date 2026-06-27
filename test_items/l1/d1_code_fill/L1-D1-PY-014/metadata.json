@@ -1,0 +1,36 @@
+{
+  "id": "L1-D1-PY-014",
+  "layer": "L1",
+  "dimensions": [
+    "D1"
+  ],
+  "sub_dimensions": [],
+  "language": "python",
+  "difficulty": 5,
+  "estimated_time_min": 15,
+  "tags": [
+    "concurrency",
+    "threading"
+  ],
+  "sandbox": {
+    "image": "python",
+    "dependencies": [
+      "pytest"
+    ],
+    "network": "none"
+  },
+  "prompt_template": "Implement `run_in_parallel(funcs: list[callable]) -> list` in `main.py`.\nExecute all given callables in parallel using threads, collect and return their return values in the same order.\nUse only the `threading` module. Each callable takes no arguments.",
+  "context_files": [
+    "context/main.py"
+  ],
+  "expected_artifacts": [
+    "main.py"
+  ],
+  "scoring": {
+    "type": "unit_test",
+    "test_command": "python -m pytest judge/test_main.py -v",
+    "pass_threshold": 0.85
+  },
+  "created": "2026-07-01",
+  "version": "1.0"
+}

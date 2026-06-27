@@ -1,0 +1,30 @@
+{
+  "id": "L1-D2-DC-007",
+  "layer": "L1",
+  "dimensions": [
+    "D2"
+  ],
+  "sub_dimensions": [],
+  "language": "any",
+  "difficulty": 4,
+  "estimated_time_min": 20,
+  "tags": [
+    "decompose",
+    "security"
+  ],
+  "sandbox": {
+    "image": "python",
+    "dependencies": [],
+    "network": "none"
+  },
+  "prompt_template": "Decompose into subtasks:\n\"Implement JWT authentication with refresh tokens, rate limiting, and OAuth2 Google login for the existing API.\"\nOutput JSON tree.",
+  "context_files": [],
+  "expected_artifacts": [],
+  "scoring": {
+    "type": "tree_sim",
+    "expected_tree": "{\"task\": \"Implement JWT + OAuth2 auth\", \"subtasks\": [{\"task\": \"Add JWT token generation and validation\", \"subtasks\": []}, {\"task\": \"Implement refresh token flow\", \"subtasks\": []}, {\"task\": \"Add OAuth2 Google login integration\", \"subtasks\": []}, {\"task\": \"Implement rate limiting middleware\", \"subtasks\": []}, {\"task\": \"Protect existing API routes\", \"subtasks\": []}, {\"task\": \"Add auth tests\", \"subtasks\": []}, {\"task\": \"Update API documentation\", \"subtasks\": []}]}",
+    "tree_threshold": 0.6
+  },
+  "created": "2026-07-01",
+  "version": "1.0"
+}

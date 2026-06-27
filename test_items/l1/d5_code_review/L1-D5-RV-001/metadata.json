@@ -1,0 +1,31 @@
+{
+  "id": "L1-D5-RV-001",
+  "layer": "L1",
+  "dimensions": [
+    "D5"
+  ],
+  "sub_dimensions": [],
+  "language": "python",
+  "difficulty": 1,
+  "estimated_time_min": 6,
+  "tags": [
+    "review",
+    "security",
+    "sql-injection"
+  ],
+  "sandbox": {
+    "image": "python",
+    "dependencies": [],
+    "network": "none"
+  },
+  "prompt_template": "Review the following code diff for a PR. Identify all issues:\n\n```diff\n+ def get_user(user_id):\n+     query = \"SELECT * FROM users WHERE id = \" + user_id\n+     return db.execute(query)\n```\n\nList each issue with: file location, severity (critical/high/medium/low), description, and suggested fix.",
+  "context_files": [],
+  "expected_artifacts": [],
+  "scoring": {
+    "type": "llm_judge",
+    "test_command": "",
+    "pass_threshold": 0.0
+  },
+  "created": "2026-07-01",
+  "version": "1.0"
+}

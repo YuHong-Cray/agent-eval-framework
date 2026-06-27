@@ -1,0 +1,10 @@
+[
+  "No idempotency \u2014 duplicate requests charge twice",
+  "Stripe charge before DB commit \u2014 charge succeeds but order may fail to save",
+  "Email send inside transaction \u2014 blocks on network, no retry",
+  "Balance check race condition between two concurrent requests",
+  "Stripe API key not shown but presumably hardcoded/inline",
+  "No logging or audit trail",
+  "Amount in dollars but balance check compares directly",
+  "No retry or rollback on Stripe failure"
+]

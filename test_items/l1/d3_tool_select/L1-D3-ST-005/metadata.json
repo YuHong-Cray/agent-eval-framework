@@ -1,0 +1,36 @@
+{
+  "id": "L1-D3-ST-005",
+  "layer": "L1",
+  "dimensions": [
+    "D3"
+  ],
+  "sub_dimensions": [],
+  "language": "any",
+  "difficulty": 3,
+  "estimated_time_min": 9,
+  "tags": [
+    "replace",
+    "tool-select"
+  ],
+  "sandbox": {
+    "image": "python",
+    "dependencies": [],
+    "network": "none"
+  },
+  "prompt_template": "In file `/project/src/main.py`, replace the line `DEBUG = True` with `DEBUG = False`. Use an edit/replace tool with parameters `file_path`, `old_string`, and `new_string`.",
+  "context_files": [],
+  "expected_artifacts": [],
+  "scoring": {
+    "type": "tool_match",
+    "tool_sequence": [
+      "Edit"
+    ],
+    "key_params": [
+      "file_path",
+      "old_string",
+      "new_string"
+    ]
+  },
+  "created": "2026-07-01",
+  "version": "1.0"
+}

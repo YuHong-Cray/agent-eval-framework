@@ -1,0 +1,37 @@
+{
+  "id": "L1-D5-PY-010",
+  "layer": "L1",
+  "dimensions": [
+    "D5"
+  ],
+  "sub_dimensions": [],
+  "language": "python",
+  "difficulty": 5,
+  "estimated_time_min": 25,
+  "tags": [
+    "data",
+    "mutation",
+    "side-effect"
+  ],
+  "sandbox": {
+    "image": "python",
+    "dependencies": [
+      "pytest"
+    ],
+    "network": "none"
+  },
+  "prompt_template": "The function `merge_user_data` in `main.py` has two bugs: it mutates input data unexpectedly, and duplicates entries. Find and fix both bugs.\nIt should merge new_data into existing dict without side effects.",
+  "context_files": [
+    "context/main.py"
+  ],
+  "expected_artifacts": [
+    "main.py"
+  ],
+  "scoring": {
+    "type": "unit_test",
+    "test_command": "python -m pytest judge/test_main.py -v",
+    "pass_threshold": 0.85
+  },
+  "created": "2026-07-01",
+  "version": "1.0"
+}

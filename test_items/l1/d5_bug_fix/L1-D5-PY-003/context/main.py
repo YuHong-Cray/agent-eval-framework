@@ -1,0 +1,3 @@
+def add_item(item: str, items: list[str] = []) -> list[str]:
+    items.append(item)
+    return items

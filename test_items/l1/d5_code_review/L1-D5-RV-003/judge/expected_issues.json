@@ -1,0 +1,4 @@
+[
+  "O(n) lookup called in loop \u2014 O(n\u00b2) total, build a dict/index first",
+  "No handling if 'email' key missing from user dict"
+]

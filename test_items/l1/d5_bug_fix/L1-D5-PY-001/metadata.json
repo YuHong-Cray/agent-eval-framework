@@ -1,0 +1,36 @@
+{
+  "id": "L1-D5-PY-001",
+  "layer": "L1",
+  "dimensions": [
+    "D5"
+  ],
+  "sub_dimensions": [],
+  "language": "python",
+  "difficulty": 1,
+  "estimated_time_min": 5,
+  "tags": [
+    "array",
+    "off-by-one"
+  ],
+  "sandbox": {
+    "image": "python",
+    "dependencies": [
+      "pytest"
+    ],
+    "network": "none"
+  },
+  "prompt_template": "The function `sum_list` in `main.py` has a bug. Find and fix it so that all tests pass.\nThe function should return the sum of all integers in the list.",
+  "context_files": [
+    "context/main.py"
+  ],
+  "expected_artifacts": [
+    "main.py"
+  ],
+  "scoring": {
+    "type": "unit_test",
+    "test_command": "python -m pytest judge/test_main.py -v",
+    "pass_threshold": 0.85
+  },
+  "created": "2026-07-01",
+  "version": "1.0"
+}

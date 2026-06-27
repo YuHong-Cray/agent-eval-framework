@@ -1,0 +1,49 @@
+{
+  "id": "L2-SCENARIO-007",
+  "layer": "L2",
+  "dimensions": [
+    "D1",
+    "D2",
+    "D3",
+    "D5"
+  ],
+  "sub_dimensions": [
+    "D4",
+    "D6"
+  ],
+  "language": "python",
+  "difficulty": 4,
+  "estimated_time_min": 45,
+  "tags": [
+    "database",
+    "migration",
+    "sqlite"
+  ],
+  "sandbox": {
+    "image": "python",
+    "dependencies": [
+      "pytest",
+      "flask",
+      "click",
+      "requests"
+    ],
+    "network": "whitelist"
+  },
+  "prompt_template": "# Task: Database Migration Manager\n\nIn the provided project, implement `migrate.py` ¡ª a simple database migration tool:\n\n1. Reads migration SQL files from `migrations/` directory, sorted by filename (format: `001_desc.sql`, `002_desc.sql`, etc.)\n2. Tracks which migrations have been applied in a `_migrations` table (auto-created if missing)\n3. `--up` applies all pending migrations in order, each wrapped in a transaction\n4. `--down` rolls back the last applied migration batch\n5. `--status` prints which migrations are applied vs pending\n6. Uses SQLite (via sqlite3 standard library)\n\nDeliverables: `migrate.py`, `test_migrate.py`.",
+  "context_files": [
+    "context\\migrate.py",
+    "context\\migrations\\001_create_users.sql",
+    "context\\migrations\\002_add_profiles.sql",
+    "context\\README.md"
+  ],
+  "expected_artifacts": [
+    "migrate.py",
+    "test_migrate.py"
+  ],
+  "scoring": {
+    "type": "llm_judge",
+    "pass_threshold": 0.7
+  },
+  "created": "2026-07-10",
+  "version": "1.0"
+}

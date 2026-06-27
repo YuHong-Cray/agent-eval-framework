@@ -1,0 +1,35 @@
+{
+  "id": "L1-D3-ST-002",
+  "layer": "L1",
+  "dimensions": [
+    "D3"
+  ],
+  "sub_dimensions": [],
+  "language": "any",
+  "difficulty": 1,
+  "estimated_time_min": 3,
+  "tags": [
+    "search",
+    "tool-select"
+  ],
+  "sandbox": {
+    "image": "python",
+    "dependencies": [],
+    "network": "none"
+  },
+  "prompt_template": "Find all occurrences of the pattern `TODO` in all `.py` files under the `/project/src/` directory. Use a search/grep tool with parameters `pattern` and `path`.",
+  "context_files": [],
+  "expected_artifacts": [],
+  "scoring": {
+    "type": "tool_match",
+    "tool_sequence": [
+      "Grep"
+    ],
+    "key_params": [
+      "pattern",
+      "path"
+    ]
+  },
+  "created": "2026-07-01",
+  "version": "1.0"
+}

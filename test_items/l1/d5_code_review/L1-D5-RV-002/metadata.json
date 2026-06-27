@@ -1,0 +1,30 @@
+{
+  "id": "L1-D5-RV-002",
+  "layer": "L1",
+  "dimensions": [
+    "D5"
+  ],
+  "sub_dimensions": [],
+  "language": "python",
+  "difficulty": 1,
+  "estimated_time_min": 6,
+  "tags": [
+    "review",
+    "error-handling"
+  ],
+  "sandbox": {
+    "image": "python",
+    "dependencies": [],
+    "network": "none"
+  },
+  "prompt_template": "Review this code and find issues:\n\n```python\ndef read_config(path):\n    data = open(path).read()\n    return json.loads(data)\n```\n\nList each issue with severity and suggested fix.",
+  "context_files": [],
+  "expected_artifacts": [],
+  "scoring": {
+    "type": "llm_judge",
+    "test_command": "",
+    "pass_threshold": 0.0
+  },
+  "created": "2026-07-01",
+  "version": "1.0"
+}

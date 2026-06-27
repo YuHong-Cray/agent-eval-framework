@@ -1,0 +1,48 @@
+{
+  "id": "L2-SCENARIO-004",
+  "layer": "L2",
+  "dimensions": [
+    "D1",
+    "D2",
+    "D3",
+    "D5"
+  ],
+  "sub_dimensions": [
+    "D4",
+    "D6"
+  ],
+  "language": "python",
+  "difficulty": 4,
+  "estimated_time_min": 45,
+  "tags": [
+    "performance",
+    "optimization",
+    "profiling"
+  ],
+  "sandbox": {
+    "image": "python",
+    "dependencies": [
+      "pytest",
+      "pyjwt",
+      "flask"
+    ],
+    "network": "none"
+  },
+  "prompt_template": "# Task: Optimize a Slow API Endpoint\n\nThe provided `app.py` has a `/api/report` endpoint that generates a monthly sales report. It runs correctly but is too slow (should complete in under 100ms for 10k records, currently takes seconds).\n\nYour tasks:\n\n1. Profile the endpoint to identify performance bottlenecks\n2. Optimize the code ¡ª common issues include:\n   - N+1 database queries\n   - Inefficient in-memory operations\n   - Missing database indexes\n   - Unnecessary data copies\n3. Document all changes with before/after timing in `OPTIMIZATION.md`\n4. Ensure all existing tests still pass and add a performance test\n\nDeliverables: updated `app.py`, `OPTIMIZATION.md`, and updated `test_app.py`.",
+  "context_files": [
+    "context\\app.py",
+    "context\\test_app.py",
+    "context\\README.md"
+  ],
+  "expected_artifacts": [
+    "app.py",
+    "OPTIMIZATION.md",
+    "test_app.py"
+  ],
+  "scoring": {
+    "type": "llm_judge",
+    "pass_threshold": 0.7
+  },
+  "created": "2026-07-10",
+  "version": "1.0"
+}

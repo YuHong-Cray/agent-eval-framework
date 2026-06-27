@@ -1,0 +1,36 @@
+{
+  "id": "L1-D5-PY-002",
+  "layer": "L1",
+  "dimensions": [
+    "D5"
+  ],
+  "sub_dimensions": [],
+  "language": "python",
+  "difficulty": 1,
+  "estimated_time_min": 5,
+  "tags": [
+    "string",
+    "immutability"
+  ],
+  "sandbox": {
+    "image": "python",
+    "dependencies": [
+      "pytest"
+    ],
+    "network": "none"
+  },
+  "prompt_template": "The function `remove_vowels` in `main.py` is supposed to remove all vowels from a string, but it crashes. Find and fix the bug.\nExample: 'hello world' -> 'hll wrld'",
+  "context_files": [
+    "context/main.py"
+  ],
+  "expected_artifacts": [
+    "main.py"
+  ],
+  "scoring": {
+    "type": "unit_test",
+    "test_command": "python -m pytest judge/test_main.py -v",
+    "pass_threshold": 0.85
+  },
+  "created": "2026-07-01",
+  "version": "1.0"
+}

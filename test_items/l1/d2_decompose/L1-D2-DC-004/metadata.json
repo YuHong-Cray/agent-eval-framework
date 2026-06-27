@@ -1,0 +1,30 @@
+{
+  "id": "L1-D2-DC-004",
+  "layer": "L1",
+  "dimensions": [
+    "D2"
+  ],
+  "sub_dimensions": [],
+  "language": "any",
+  "difficulty": 2,
+  "estimated_time_min": 10,
+  "tags": [
+    "decompose",
+    "database"
+  ],
+  "sandbox": {
+    "image": "python",
+    "dependencies": [],
+    "network": "none"
+  },
+  "prompt_template": "Decompose into subtasks:\n\"Add a users table to the database and create CRUD API endpoints.\"\nOutput JSON tree.",
+  "context_files": [],
+  "expected_artifacts": [],
+  "scoring": {
+    "type": "tree_sim",
+    "expected_tree": "{\"task\": \"Add users CRUD\", \"subtasks\": [{\"task\": \"Create migration for users table\", \"subtasks\": []}, {\"task\": \"Define Users model\", \"subtasks\": []}, {\"task\": \"Build POST /users endpoint\", \"subtasks\": []}, {\"task\": \"Build GET /users endpoint\", \"subtasks\": []}, {\"task\": \"Build PUT /users/:id endpoint\", \"subtasks\": []}, {\"task\": \"Build DELETE /users/:id endpoint\", \"subtasks\": []}, {\"task\": \"Add tests\", \"subtasks\": []}]}",
+    "tree_threshold": 0.6
+  },
+  "created": "2026-07-01",
+  "version": "1.0"
+}

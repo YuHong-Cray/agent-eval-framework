@@ -1,0 +1,30 @@
+{
+  "id": "L1-D5-RV-007",
+  "layer": "L1",
+  "dimensions": [
+    "D5"
+  ],
+  "sub_dimensions": [],
+  "language": "python",
+  "difficulty": 5,
+  "estimated_time_min": 30,
+  "tags": [
+    "review",
+    "architecture"
+  ],
+  "sandbox": {
+    "image": "python",
+    "dependencies": [],
+    "network": "none"
+  },
+  "prompt_template": "Review this payment processing module for issues:\n\n```python\nclass PaymentProcessor:\n    def __init__(self, db_session):\n        self.db = db_session\n\n    def process(self, user_id, amount, card_token):\n        user = self.db.query(User).get(user_id)\n        if user.balance < amount:\n            raise ValueError('Insufficient funds')\n        charge = stripe.Charge.create(\n            amount=amount, currency='usd', source=card_token)\n        user.balance -= amount\n        order = Order(user_id=user_id, amount=amount, status='paid')\n        self.db.add(order)\n        self.db.commit()\n        send_email(user.email, 'Payment confirmed', f'Charged ${amount}')\n        return order\n```\n\nList all issues with severity and suggested fix.",
+  "context_files": [],
+  "expected_artifacts": [],
+  "scoring": {
+    "type": "llm_judge",
+    "test_command": "",
+    "pass_threshold": 0.0
+  },
+  "created": "2026-07-01",
+  "version": "1.0"
+}

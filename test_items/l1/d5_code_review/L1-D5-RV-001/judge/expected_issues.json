@@ -1,0 +1,4 @@
+[
+  "SQL injection vulnerability \u2014 user_id concatenated directly into query",
+  "Use parameterized queries or ORM"
+]
