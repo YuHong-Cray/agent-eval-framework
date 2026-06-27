@@ -145,11 +145,15 @@ class EvalRepository:
         for dim, avg_l1, avg_judge, count in q.all():
             v_l1 = round(float(avg_l1), 3) if avg_l1 is not None else None
             v_judge = round(float(avg_judge), 1) if avg_judge is not None else None
-            # Combined: prefer judge (scaled to 0-1), else l1
-            if v_judge is not None:
+            # Combined: prefer native L1 score (0-1, objective); use judge as fallback (0-1 after /5)
+            if v_l1 is not None and v_l1 > 0:
+                combined = v_l1
+            elif v_judge is not None and v_judge > 1:
                 combined = round(v_judge / 5.0, 3)
             elif v_l1 is not None:
                 combined = v_l1
+            elif v_judge is not None:
+                combined = v_judge / 5.0
             else:
                 combined = 0.0
 
