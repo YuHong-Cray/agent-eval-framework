@@ -57,6 +57,14 @@ run-eval:
 		--count $(COUNT) \
 		$(if $(SEED),--seed $(SEED),)
 
+# ── Full pipeline ─────────────────────────────────────────
+
+full-eval:       ## Quick: L1=10 L2=2 L3=skip (≈10 min)
+	bash run_full_eval.sh --adapter $(ADAPTER) --quick
+
+full-eval-full:  ## Complete: L1=50 L2=8 L3=5 (needs API key, ≈2-4h)
+	bash run_full_eval.sh --adapter $(ADAPTER)
+
 report:
 	python -m eval_framework.cli report --agent $(AGENT) --output $(OUTPUT)
 
