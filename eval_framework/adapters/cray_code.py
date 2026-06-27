@@ -1,42 +1,44 @@
 """CrayCode adapter — drives Cray via CLI with trace parsing.
 
-Cray is the AI coding agent CLI. This adapter invokes `cray --input <prompt>`
-in non-interactive mode and parses the output to capture tool-call traces.
+Wraps test item prompts with tool-usage instructions so that cray
+in --input mode actually uses Read/Write/Edit/Bash to complete tasks
+rather than just describing what it would do.
 """
 
 import json
+import os
 import re
 import shlex
 import subprocess
 import time
 from datetime import datetime, timezone
+from pathlib import Path
 from typing import Optional
 
 from eval_framework.adapters.base import AgentAdapter, TestContext
 from eval_framework.models import AgentCapabilities, AgentTrace, ToolCall, ToolCallStep
 
+# Instruction prepended to ALL prompts to force tool use in --input mode
+_CRITICAL_INSTRUCTION = """CRITICAL: You MUST use your tools (Read, Write, Edit, Bash, Grep, Glob) to actually DO the work.
+DO NOT just describe what you would do — actually do it with tools!
+- Use Read to see file contents before editing
+- Use Write to create new files with the required code
+- Use Edit to modify existing files
+- Use Bash to run tests and verify your work
+- Use Grep to search for patterns in files
+
+The working directory contains all the files mentioned in the task.
+"""
+
 
 class CrayCodeAdapter(AgentAdapter):
     """Adapter for the Cray AI coding agent.
 
-    Drives Cray via CLI in non-interactive mode (`cray --input <prompt>`),
-    parsing verbose output (-v) to extract tool-call steps.
-
-    Cray CLI reference:
-      cray [options] [prompt]           → interactive mode
-      cray --input <text> [options]     → non-interactive, send msg and exit
-      Options: -m <model>, -d <dir>, -v (verbose), --max-turns <n>, -p <mode>
+    Invokes cray in non-interactive mode with tool-use instructions.
     """
 
-    # Patterns for parsing cray -v output
-    # cray shows: [Cray] [Permission] Headless auto-approve: allowing "tool_name"
     TOOL_ALLOW_PATTERN = re.compile(
         r'\[Cray\]\s*\[Permission\].*allowing\s+"(\w+)"', re.IGNORECASE
-    )
-
-    # Turn header: [Cray] [Turn N] model_name
-    TURN_PATTERN = re.compile(
-        r'\[Cray\]\s*\[Turn\s+(\d+)\]\s+(\S+)'
     )
 
     def __init__(
@@ -61,8 +63,10 @@ class CrayCodeAdapter(AgentAdapter):
         run_id = f"run-{context.test_item_id}-{int(time.time())}"
         start = datetime.now(timezone.utc)
 
-        # Build command with shlex.quote() for shell=True safety
-        cmd = self._build_command(prompt, context)
+        # Augment prompt: list workspace files + force tool usage
+        augmented = self._augment_prompt(prompt, context.working_dir)
+
+        cmd = self._build_command(augmented, context)
 
         try:
             proc = subprocess.run(
@@ -77,115 +81,92 @@ class CrayCodeAdapter(AgentAdapter):
             )
         except subprocess.TimeoutExpired:
             return AgentTrace(
-                run_id=run_id,
-                agent_name=self._agent_name,
-                agent_version=self._agent_version,
-                test_item_id=context.test_item_id,
-                start_time=start,
-                end_time=datetime.now(timezone.utc),
-                steps=[],
-                final_output="[TIMEOUT]",
+                run_id=run_id, agent_name=self._agent_name, agent_version=self._agent_version,
+                test_item_id=context.test_item_id, start_time=start,
+                end_time=datetime.now(timezone.utc), steps=[], final_output="[TIMEOUT]",
             )
 
         end = datetime.now(timezone.utc)
         output = proc.stdout + "\n" + proc.stderr
 
-        # Parse tool calls from verbose output
         steps = self._parse_verbose(output)
-
-        # The final output is everything after the last tool call line
         final_output = self._extract_final_output(output)
 
         return AgentTrace(
-            run_id=run_id,
-            agent_name=self._agent_name,
-            agent_version=self._agent_version,
-            test_item_id=context.test_item_id,
-            start_time=start,
-            end_time=end,
-            steps=steps,
-            final_output=final_output,
+            run_id=run_id, agent_name=self._agent_name, agent_version=self._agent_version,
+            test_item_id=context.test_item_id, start_time=start, end_time=end,
+            steps=steps, final_output=final_output,
         )
 
     def capabilities(self) -> AgentCapabilities:
         return AgentCapabilities(
-            agent_name=self._agent_name,
-            agent_version=self._agent_version,
-            supported_tools=[
-                "Read", "Write", "Edit", "Bash", "Grep", "Glob",
-                "Task", "Agent", "WebSearch", "WebFetch",
-            ],
-            uses_subagents=True,
-            has_memory_across_sessions=True,
+            agent_name=self._agent_name, agent_version=self._agent_version,
+            supported_tools=["Read", "Write", "Edit", "Bash", "Grep", "Glob",
+                             "Task", "Agent", "WebSearch", "WebFetch"],
+            uses_subagents=True, has_memory_across_sessions=True,
             default_model=self._default_model,
         )
 
+    @staticmethod
+    def _augment_prompt(prompt: str, working_dir: str) -> str:
+        """Add workspace context and tool-use instructions."""
+        # List workspace files
+        file_list = ""
+        ws = Path(working_dir)
+        if ws.exists():
+            files = []
+            for p in sorted(ws.rglob("*")):
+                if p.is_file() and ".git" not in str(p) and "__pycache__" not in str(p):
+                    rel = str(p.relative_to(ws))
+                    files.append(f"  {rel}")
+            if files:
+                file_list = "Available workspace files:\n" + "\n".join(files[:30]) + "\n\n"
+
+        return f"{_CRITICAL_INSTRUCTION}\n{file_list}TASK:\n{prompt}"
+
     def _build_command(self, prompt: str, context: TestContext) -> str:
-        """Build a shell-safe Cray CLI command using shlex.quote().
+        # Use double-quote wrapping (Windows-compatible) with escaped inner quotes
+        safe_prompt = prompt.replace("\\", "\\\\").replace('"', '\\"')
+        # Collapse newlines — shell splits on them
+        safe_prompt = safe_prompt.replace("\n", " ").replace("\r", " ")
 
-        Produces: cray --input <quoted-prompt> -d <quoted-dir> ... -v
-
-        Uses shlex.quote() on all user-controlled values to prevent command injection
-        while still supporting Windows npm/.cmd wrappers that require shell=True.
-        """
-        parts = [self._command, "--input", shlex.quote(prompt)]
+        parts = [self._command, f'--input "{safe_prompt}"']
 
         dir_path = context.working_dir or self._workspace
         if dir_path:
-            parts.extend(["-d", shlex.quote(dir_path)])
+            parts.extend(["-d", f'"{dir_path}"'])
 
         if self._default_model:
-            parts.extend(["-m", shlex.quote(self._default_model)])
+            parts.extend(["-m", self._default_model])
 
         if self._max_turns:
             parts.extend(["--max-turns", str(self._max_turns)])
 
         if self._permission_mode:
-            parts.extend(["-p", shlex.quote(self._permission_mode)])
+            parts.extend(["-p", self._permission_mode])
 
-        # Verbose mode for trace parsing
         parts.append("-v")
-
         return " ".join(parts)
 
     def _parse_verbose(self, output: str) -> list[ToolCallStep]:
-        """Parse cray -v output for tool calls.
-
-        cray outputs:
-          [Cray] [Permission] Headless auto-approve: allowing "bash"
-          [Cray] [Permission] Headless auto-approve: allowing "read"
-          [Cray] [Turn 1] deepseek/deepseek-v4-flash
-        """
         steps: list[ToolCallStep] = []
         now = datetime.now(timezone.utc)
-
         for line in output.split("\n"):
             m = self.TOOL_ALLOW_PATTERN.search(line)
             if m:
-                tool_name = m.group(1).capitalize()
-                steps.append(
-                    ToolCallStep(
-                        step_index=len(steps),
-                        tool_call=ToolCall(
-                            tool_name=tool_name,
-                            params={},
-                        ),
-                        result={},
-                        timestamp=now,
-                        duration_ms=0,
-                    )
-                )
+                steps.append(ToolCallStep(
+                    step_index=len(steps),
+                    tool_call=ToolCall(tool_name=m.group(1).capitalize(), params={}),
+                    result={}, timestamp=now, duration_ms=0,
+                ))
         return steps
 
     @staticmethod
     def _extract_final_output(output: str) -> str:
-        """Extract the final agent message after all tool calls."""
         lines = output.strip().split("\n")
-        # Walk backwards to find the last substantive output line
         final_lines = []
         for line in reversed(lines):
             stripped = line.strip()
-            # Skip cray framework lines
             if not stripped or stripped.startswith("[Cray]"):
                 if final_lines:
                     break
