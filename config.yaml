@@ -9,7 +9,8 @@ sandbox:
   timeout_default: 900           # 15 min default
 
 database:
-  url: "postgresql://eval:eval@localhost:5432/eval_framework"
+  url: "sqlite:///eval_framework.db"       # SQLite for local dev
+  # url: "postgresql://eval:eval@localhost:5432/eval_framework"  # PostgreSQL for production
 
 scoring:
   l1:

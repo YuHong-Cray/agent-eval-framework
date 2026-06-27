@@ -1,5 +1,14 @@
 .PHONY: help install test lint run-eval report dashboard db-up db-down build-sandbox
 
+# Default values (override with: make run-eval LAYER=L2 COUNT=5)
+ADAPTER ?= craycode
+COMMAND ?=
+LAYER   ?= L1
+COUNT   ?= 5
+SEED    ?=
+AGENT   ?= craycode
+OUTPUT  ?= reports/report.md
+
 help:
 	@echo "Coding Agent Evaluation Framework"
 	@echo ""
@@ -46,7 +55,7 @@ run-eval:
 		--command "$(COMMAND)" \
 		--layer $(LAYER) \
 		--count $(COUNT) \
-		--seed $(SEED)
+		$(if $(SEED),--seed $(SEED),)
 
 report:
 	python -m eval_framework.cli report --agent $(AGENT) --output $(OUTPUT)

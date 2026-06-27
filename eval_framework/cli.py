@@ -100,6 +100,7 @@ def run(adapter: str, command: str, layer: str, count: int, seed: int):
 )
 def report(agent: str, output: str):
     """Generate evaluation report."""
+    init_db()
     repo = EvalRepository(get_session())
     scores = repo.get_agent_scores(agent) if agent else {}
 

@@ -27,3 +27,4 @@ from eval_framework.adapters.cray_code import CrayCodeAdapter
 # Built-in registrations
 AdapterFactory.register("cli", CLIAdapter)
 AdapterFactory.register("craycode", CrayCodeAdapter)
+AdapterFactory.register("cray", CrayCodeAdapter)      # short alias
