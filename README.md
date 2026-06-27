@@ -1,7 +1,7 @@
 # Agent Eval Framework
 
-[![Tests](https://img.shields.io/badge/tests-46%2F46%20PASS-brightgreen)](https://github.com/yuHong-Cray/agent-eval-framework)
-[![Python](https://img.shields.io/badge/python-3.12%2B-blue)](https://www.python.org/)
+[![Tests](https://img.shields.io/badge/tests-48%2F48%20PASS-brightgreen)](https://github.com/yuHong-Cray/agent-eval-framework)
+[![Python](https://img.shields.io/badge/python-3.10%2B-blue)](https://www.python.org/)
 [![License](https://img.shields.io/badge/license-MIT-green)](LICENSE)
 
 一个用于深度评测 Coding Agent 的三层混合评估框架。支持对任意 AI 编程助手（CrayCode、Copilot、Cursor 等）进行**代码生成、任务拆解、工具调用、多智能体协作、审查调试、持续记忆**六个维度的可量化、可复现、可横向对比的标准化评测。
@@ -26,18 +26,18 @@
 │   隔离执行，文件系统快照，网络控制                              │
 ├───────────────────────┬─────────────────────────────────────┤
 │  判分引擎 (Scoring)    │  结果存储 & Dashboard                 │
-│  L1: 自动化判分        │  PostgreSQL + SQLAlchemy             │
+│  L1: 自动化判分        │  SQLite / PostgreSQL + SQLAlchemy     │
 │  L2/L3: LLM-as-Judge  │  Streamlit 可视化                    │
 └───────────────────────┴─────────────────────────────────────┘
 ```
 
 ### 三层评测体系
 
-| 层级 | 题目数 | 时长 | 判分方式 | 重点维度 |
-|------|--------|------|---------|---------|
-| **Layer 1** 原子能力基准 | 50题 | 5-15min/题 | 自动化（单测+工具匹配+拆解树相似度） | D1代码生成, D3工具调用, D5审查调试 |
-| **Layer 2** 集成场景测试 | 8题 | 30-60min/题 | LLM-as-Judge (DeepSeek-V4-Flash) | 全部6维融合作战 |
-| **Layer 3** 长程项目测试 | 2项目×5会话 | 跨多会话 | LLM-as-Judge + 人工抽检 | D6记忆, D4多智能体, D2拆解 |
+| 层级 | 题目数 | 时长 | 实际耗时 | 判分方式 | 重点维度 |
+|------|--------|------|---------|---------|---------|
+| **Layer 1** 原子能力基准 | 50题 | 5-15min/题 | ≈20-30min (并发4) | 自动化（单测+工具匹配+拆解树相似度） | D1代码生成, D3工具调用, D5审查调试 |
+| **Layer 2** 集成场景测试 | 8题 | 30-60min/题 | ≈1-2h (串行) | LLM-as-Judge (DeepSeek-V4-Flash) | 全部6维融合作战 |
+| **Layer 3** 长程项目测试 | 2项目×5会话 | 跨多会话 | ≈0.5-1h | LLM-as-Judge + 人工抽检 | D6记忆, D4多智能体, D2拆解 |
 
 ### 六大评测维度
 
@@ -56,46 +56,58 @@
 
 ### 环境要求
 
-- Python 3.12+
+- Python 3.10+
 - Docker（沙箱隔离执行，可选）
 - PostgreSQL（可选，默认使用 SQLite）
 
 ### 安装
 
 ```bash
-# 克隆仓库
 git clone https://github.com/yuHong-Cray/agent-eval-framework.git
 cd agent-eval-framework
 
 # 安装依赖
-make install
-# 或: pip install -r requirements.txt
+pip install -r requirements.txt
 ```
 
 ### 运行评测
 
 ```bash
-# 快速运行——使用通用 CLI 适配器，挑选 5 道 L1 题目测试
-make run-eval ADAPTER=cli COMMAND="echo hello" LAYER=L1 COUNT=5 SEED=42
+# ── 一句话全量评测 ──────────────────────────────────────
 
-# 使用 CrayCode 适配器（需安装 CrayCode）
-make run-eval ADAPTER=craycode LAYER=L1 COUNT=10 SEED=42
+# 快速模式（≈10分钟）— L1=10题 + L2=2场景
+make full-eval
 
-# 运行 Layer 2 集成场景
-make run-eval ADAPTER=craycode LAYER=L2 COUNT=2
+# 完整模式（≈2-4小时）— L1=50题 + L2=8场景 + L3=5会话
+# 需要配置 EVAL_JUDGE_API_KEY
+make full-eval-full
 
-# 查看所有 CLI 选项
-python -m eval_framework.cli --help
+# ── 单层评测 ────────────────────────────────────────────
+
+# L1: 原子能力基准 (50题, 并发4线程, ≈20-30min)
+make run-eval ADAPTER=claude LAYER=L1 SEED=42
+
+# L1: 挑10题快速验证
+make run-eval ADAPTER=claude LAYER=L1 COUNT=10 SEED=42
+
+# L2: 集成场景 (需要 API key)
+make run-eval ADAPTER=claude LAYER=L2 COUNT=2 SEED=42
+
+# L3: 长程项目 (需要 API key)
+make run-eval ADAPTER=claude LAYER=L3
+
+# 通用 CLI 适配器（无需安装任何 agent）
+make run-eval ADAPTER=cli COMMAND="echo done" LAYER=L1 COUNT=5 SEED=42
+
+# 清理旧数据重新测试
+python -m eval_framework.cli reset
 ```
 
 ### 运行测试
 
 ```bash
-# 运行全部 46 项单元测试
-make test
-
-# 仅运行单测
-make test-unit
+# 运行全部 48 项单元测试
+python -m pytest tests/ -v
 
 # 生成覆盖率报告
 python -m pytest tests/ --cov=eval_framework --cov-report=html
@@ -104,15 +116,16 @@ python -m pytest tests/ --cov=eval_framework --cov-report=html
 ### 生成报告
 
 ```bash
-# 生成 Markdown 评测报告
-make report AGENT=craycode OUTPUT=reports/craycode-report.md
+# Markdown 报告
+python -m eval_framework.cli report --agent craycode --output reports/report.md
+
+# 全量评测会自动在 reports/<timestamp>/ 下生成报告和 JSON 汇总
 ```
 
 ### 启动 Dashboard
 
 ```bash
-make dashboard
-# 或: streamlit run eval_framework/dashboard/app.py
+streamlit run eval_framework/dashboard/app.py
 ```
 
 浏览器访问 `http://localhost:8501`，可查看：
@@ -123,6 +136,40 @@ make dashboard
 
 ---
 
+## 全量评测流程
+
+```
+┌──────────────────────────────────────────────────┐
+│ 🧹 Step 0  Reset DB     清空上次数据               │
+├──────────────────────────────────────────────────┤
+│ 🔬 Step 1  Layer 1      原子能力基准              │
+│            50题 并发4   ≈20-30min                 │
+│            自动判分（单测/工具匹配/拆解树）         │
+├──────────────────────────────────────────────────┤
+│ 🧪 Step 2  Layer 2      集成场景测试              │
+│            8个场景 串行  ≈1-2h                    │
+│            LLM-as-Judge 6维评分                   │
+├──────────────────────────────────────────────────┤
+│ 🏗️ Step 3  Layer 3      长程项目测试              │
+│            5个会话 串行  ≈0.5-1h                  │
+│            跨会话记忆+多Agent协作                  │
+├──────────────────────────────────────────────────┤
+│ 📊 Step 4  Report       报告生成                  │
+│            Markdown + JSON汇总                    │
+│            reports/<timestamp>/                   │
+└──────────────────────────────────────────────────┘
+```
+
+```bash
+# 完整流程（一条命令）
+bash run_full_eval.sh --adapter claude
+
+# 或自定义
+bash run_full_eval.sh --adapter cray --skip-l3 --l1-count 30
+```
+
+---
+
 ## 项目结构
 
 ```
@@ -130,7 +177,7 @@ agent-eval-framework/
 ├── eval_framework/                # 核心框架
 │   ├── config.py                  # YAML + 环境变量配置系统
 │   ├── models.py                  # Pydantic 数据模型（6维×3层）
-│   ├── cli.py                     # Click CLI 入口
+│   ├── cli.py                     # Click CLI 入口 (run/report/reset)
 │   │
 │   ├── orchestrator/              # 评测编排层
 │   │   ├── scheduler.py           # 并发调度 + 端到端执行流程
@@ -140,7 +187,7 @@ agent-eval-framework/
 │   ├── adapters/                  # Agent 接口适配层
 │   │   ├── base.py                # AgentAdapter 抽象基类
 │   │   ├── cli_generic.py         # 通用 CLI 适配器
-│   │   ├── cray_code.py           # CrayCode 适配器（结构化JSON + 日志解析）
+│   │   ├── cray_code.py           # CrayCode 适配器（cray --input + -v 解析）
 │   │   └── factory.py             # 适配器工厂 + 注册表
 │   │
 │   ├── sandbox/                   # Docker 沙箱环境
@@ -157,12 +204,12 @@ agent-eval-framework/
 │   │   └── calibrator.py          # 人工抽检校准
 │   │
 │   ├── db/                        # 数据持久化
-│   │   ├── connection.py          # 数据库连接管理
+│   │   ├── connection.py          # 数据库连接管理 (SQLite WAL + 线程安全)
 │   │   ├── models.py              # SQLAlchemy ORM
-│   │   └── repository.py          # CRUD + 聚合查询
+│   │   └── repository.py          # CRUD + 聚合查询 (写入锁)
 │   │
 │   └── dashboard/                 # 可视化面板
-│       ├── app.py                 # Streamlit 应用
+│       ├── app.py                 # Streamlit 应用 (自动发现 DB 中 agent)
 │       ├── charts.py              # 雷达图 / 柱状图 / 趋势折线
 │       └── report.py              # Markdown 报告生成
 │
@@ -189,10 +236,11 @@ agent-eval-framework/
 │       └── L3-PROJECT-002         # 跨2会话多Agent重构（协作导向）
 │
 ├── tests/                         # 框架测试
-│   ├── unit/                      # 46项单元测试
+│   ├── unit/                      # 48项单元测试
 │   └── integration/               # 端到端集成测试
 │
 ├── scripts/                       # 题库生成脚本
+├── run_full_eval.sh               # 全量评测一键脚本
 ├── config.yaml                    # 默认全局配置
 ├── requirements.txt               # Python 依赖
 ├── docker-compose.yml             # PostgreSQL 本地开发
@@ -202,6 +250,15 @@ agent-eval-framework/
 ---
 
 ## 适配器使用
+
+### 已注册适配器
+
+| 别名 | 适配器 | 说明 |
+|------|--------|------|
+| `claude` | CrayCodeAdapter | 默认，调用 `cray` CLI |
+| `craycode` | CrayCodeAdapter | 同上 |
+| `cray` | CrayCodeAdapter | 同上 |
+| `cli` | CLIAdapter | 通用命令行，stdin 输入 |
 
 ### CLIAdapter（通用命令行）
 
@@ -216,27 +273,17 @@ python -m eval_framework.cli run \
 
 ### CrayCodeAdapter
 
-为 CrayCode 定制的适配器，支持**结构化 JSON 输出解析**和**人类可读日志回退解析**，可捕获完整的工具调用轨迹：
+内建适配器，已自动注册。调用 `cray` CLI 命令，支持：
+
+- **非交互模式**：`cray --input "<prompt>" -d <dir> -v`
+- **工具调用追踪**：解析 `[Cray] [Permission] ... allowing "tool"` 日志行
+- **安全命令构建**：`shlex.quote()` 防止注入
+- **终端输出提取**：过滤框架日志，仅保留 agent 最终回复
 
 ```bash
-# 注册
-python -c "
-from eval_framework.adapters.factory import AdapterFactory
-from eval_framework.adapters.cray_code import CrayCodeAdapter
-AdapterFactory.register('craycode', CrayCodeAdapter)
-"
-
-# 使用
-python -m eval_framework.cli run \
-    --adapter craycode \
-    --layer L1 --count 10
+# 直接使用
+make run-eval ADAPTER=claude LAYER=L1 COUNT=10 SEED=42
 ```
-
-CrayCodeAdapter 特性：
-- `--output-format json` 模式：解析 JSON Lines 格式的工具调用输出
-- Verbose 模式：正则解析人类可读的日志（`Reading file...` → `Read` 工具调用）
-- 支持自定义系统 prompt（`--system-prompt`）
-- 自动捕获子 Agent 分发（`Task` 工具调用）
 
 ### 添加新适配器
 
@@ -269,7 +316,7 @@ AdapterFactory.register("my-agent", MyAdapter)
 最终得分 = L1 × 0.40 + L2 × 0.40 + L3 × 0.20
 
 L1 = Σ(各题型得分 × 题型权重) / 总题数
-L2 = Σ(各场景六维评分) / 场景数
+L2 = Σ(各场景六维评分 × 5) / 场景数
 L3 = Σ(各项目评分) / 项目数
 ```
 
@@ -308,6 +355,8 @@ sandbox:
   timeout_default: 900        # 默认超时 15分钟
 
 scoring:
+  l1:
+    pass_threshold: 0.85
   l2_l3:
     judge_model: "deepseek-v4-flash"    # LLM-as-Judge 模型
     judge_api_base: "https://api.deepseek.com"
@@ -315,24 +364,28 @@ scoring:
 
 layers:
   l1:
-    concurrency: "high"       # 高并发 (Docker 核数上限)
+    concurrency: "high"       # 高并发 (4线程)
     retry: 1
     timeout_minutes: 15
   l2:
-    concurrency: "low"        # 低并发 (2-3题)
+    concurrency: "low"        # 串行
     retry: 0
     timeout_minutes: 60
   l3:
     concurrency: "serial"     # 串行
     retry: 0
     timeout_minutes: 120
+
+database:
+  url: "sqlite:///eval_framework.db"    # 本地 SQLite
+  # url: "postgresql://eval:eval@localhost:5432/eval_framework"  # 生产用 PostgreSQL
 ```
 
 环境变量覆盖：
 
 ```bash
 export EVAL_DATABASE_URL="postgresql://user:pass@host:5432/eval"
-export EVAL_JUDGE_API_KEY="sk-xxx"
+export EVAL_JUDGE_API_KEY="sk-xxx"      # L2/L3 评测必需
 export EVAL_SANDBOX_MAX_CONCURRENCY=8
 ```
 
@@ -382,15 +435,22 @@ test_items/l1/d1_code_fill/L1-D1-PY-016/
 
 ---
 
-## 开发
+## CLI 命令
 
 ```bash
-make install         # 安装依赖
-make test            # 运行全部测试
-make test-unit       # 仅单元测试
-make lint            # 代码检查（需安装 ruff）
-make db-up           # 启动 PostgreSQL
-make build-sandbox   # 构建 Docker 沙箱镜像
+python -m eval_framework.cli --help
+
+# 子命令
+python -m eval_framework.cli run     # 运行评测
+python -m eval_framework.cli report  # 生成报告
+python -m eval_framework.cli reset   # 清空所有评测数据
+
+# 常用选项
+python -m eval_framework.cli run --help
+  --adapter TEXT   Agent 适配器 [cli, claude, craycode, cray]
+  --layer TEXT     评测层级 [L1, L2, L3]
+  --count INTEGER  题目数量 (0=全部)
+  --seed INTEGER   随机种子
 ```
 
 ---
@@ -398,8 +458,8 @@ make build-sandbox   # 构建 Docker 沙箱镜像
 ## 路线图
 
 - [x] 阶段一：基础设施搭建（配置、模型、沙箱、适配器、DB、判分、Dashboard）
-- [x] 阶段二：核心题库建设（50 L1 + 4 L2）
-- [x] 阶段三：完整体系上线（L2→8, L3→5, CrayCodeAdapter, Dashboard增强）
+- [x] 阶段二：核心题库建设（50 L1 + 8 L2 + 5 L3）
+- [x] 阶段三：完整体系上线（CrayCodeAdapter、并发修复、全量脚本）
 - [ ] 阶段四：持续运营
   - [ ] 对抗题目生成流程
   - [ ] CopilotAdapter / CursorAdapter
