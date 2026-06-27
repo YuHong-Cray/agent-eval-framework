@@ -70,3 +70,6 @@ report:
 
 dashboard:
 	streamlit run eval_framework/dashboard/app.py
+
+test-eval:       ## Reset + Full Eval + Report (one command, needs API key)
+	bash run_full_eval.sh --adapter $(ADAPTER) --reset
