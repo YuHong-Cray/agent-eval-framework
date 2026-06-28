@@ -12,6 +12,7 @@
 #    ./run_full_eval.sh --quick                 # 快速模式: L1=10, L2=2, L3=skip
 # ============================================================
 set -euo pipefail
+export PYTHONUTF8=1  # Force Python to use UTF-8 encoding (fixes GBK errors on Chinese Windows)
 
 # ── 默认参数 ───────────────────────────────────────────────
 ADAPTER="${ADAPTER:-claude}"
@@ -67,6 +68,15 @@ echo ""
 mkdir -p "$REPORT_DIR"
 
 CLI="python -m eval_framework.cli"
+
+# Agent name in DB may differ from CLI alias (e.g. "cray" → "craycode")
+_agent_name_for_report() {
+    case "$ADAPTER" in
+        cray|craycode) echo "craycode" ;;
+        *)             echo "$ADAPTER" ;;
+    esac
+}
+REPORT_AGENT=$(_agent_name_for_report)
 
 # ── 清理（仅在 --reset 时）─────────────────────────────────
 STEP_INDEX=0
@@ -159,7 +169,7 @@ echo "📊 Step 4: Generating reports..."
 echo "──────────────────────────────────────────────────────────"
 
 # Per-agent report
-$CLI report --agent "$ADAPTER" --output "${REPORT_DIR}/${ADAPTER}_report.md" 2>&1
+$CLI report --agent "$REPORT_AGENT" --output "${REPORT_DIR}/${ADAPTER}_report.md" 2>&1
 
 # Summary JSON (manual extract from DB)
 python -c "
@@ -203,6 +213,15 @@ for agent in agents:
     for dim, d in sorted(s['scores'].items()):
         score = d.get('combined_score', 0)
         print(f'    {dim}: {score:.3f}')
+
+    # Overall score out of 10
+    all_scores = [d.get('combined_score', 0) for d in s['scores'].values()]
+    if all_scores:
+        overall_raw = sum(all_scores) / len(all_scores)
+        overall_10 = overall_raw * 10.0
+        print('    ' + '-' * 21)
+        print('    Overall: {:.1f} / 10'.format(overall_10))
+    print()
 " 2>&1
 
 echo ""

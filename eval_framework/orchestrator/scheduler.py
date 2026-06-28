@@ -3,6 +3,7 @@
 Each _run_single_item creates a fresh DB session so SQLite works correctly.
 """
 
+import shutil
 import sys
 import tempfile
 import time
@@ -90,8 +91,10 @@ class Scheduler:
         )
         repo = self._get_repo()
 
+        result = None
         try:
-            with tempfile.TemporaryDirectory() as tmp_dir:
+            tmp_dir = tempfile.mkdtemp()
+            try:
                 workspace = Path(tmp_dir)
                 self._preparer.prepare_workspace(item.id, workspace)
 
@@ -135,8 +138,10 @@ class Scheduler:
                         l1_score=result.l1_score,
                         judge_score=judge_map.get(dim.value),
                     )
+            finally:
+                shutil.rmtree(tmp_dir, ignore_errors=True)
 
-                return result
+            return result
 
         except Exception as e:
             trace = collector.finish(f"Error: {e}")
@@ -169,5 +174,5 @@ class Scheduler:
         for rel in item.expected_artifacts:
             path = workspace / rel
             if path.exists():
-                parts.append(f"--- {rel} ---\n{path.read_text()}\n")
+                parts.append(f"--- {rel} ---\n{path.read_text(encoding='utf-8', errors='replace')}\n")
         return "\n".join(parts) if parts else "(no deliverables found)"

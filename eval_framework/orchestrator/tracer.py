@@ -65,12 +65,12 @@ class TraceCollector:
     def save(trace: AgentTrace, path: Path) -> None:
         """Write trace to a JSON file."""
         path.parent.mkdir(parents=True, exist_ok=True)
-        path.write_text(trace.model_dump_json(indent=2))
+        path.write_text(trace.model_dump_json(indent=2), encoding="utf-8")
 
     @staticmethod
     def load(path: Path) -> AgentTrace:
         """Load trace from a JSON file."""
-        return AgentTrace.model_validate_json(path.read_text())
+        return AgentTrace.model_validate_json(path.read_text(encoding="utf-8"))
 
     @staticmethod
     def save_to_dict(trace: AgentTrace) -> dict:

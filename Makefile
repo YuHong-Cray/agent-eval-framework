@@ -50,7 +50,7 @@ build-sandbox:
 	docker build -t eval-sandbox-go:latest -f go.Dockerfile .
 
 run-eval:
-	python -m eval_framework.cli run \
+	PYTHONUTF8=1 python -m eval_framework.cli run \
 		--adapter $(ADAPTER) \
 		$(if $(COMMAND),--command "$(COMMAND)",) \
 		--layer $(LAYER) \
@@ -66,7 +66,7 @@ full-eval-full:  ## Complete: L1=50 L2=8 L3=5 (needs API key, ≈2-4h)
 	bash run_full_eval.sh --adapter $(ADAPTER)
 
 report:
-	python -m eval_framework.cli report --agent $(AGENT) --output $(OUTPUT)
+	PYTHONUTF8=1 python -m eval_framework.cli report --agent $(AGENT) --output $(OUTPUT)
 
 dashboard:
 	streamlit run eval_framework/dashboard/app.py

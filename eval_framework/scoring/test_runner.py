@@ -37,6 +37,8 @@ class LanguageTestRunner(ABC):
             shell=True,
             capture_output=True,
             text=True,
+            encoding="utf-8",
+            errors="replace",
             cwd=working_dir,
             timeout=timeout,
         )

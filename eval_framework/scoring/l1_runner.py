@@ -5,6 +5,9 @@ uses the LLM-as-Judge if available, since non-interactive agents
 don't produce the structured outputs these scoring types expect.
 """
 
+from pathlib import Path
+from typing import Optional
+
 from eval_framework.models import (
     AgentTrace,
     ScoringType,
@@ -45,7 +48,8 @@ class L1Scorer:
 
             elif scoring.type == ScoringType.TREE_SIMILARITY:
                 # Try native parsing first; if agent output is bad JSON,
-                # fall back to LLM judge (or score 0)
+                # fall back to scanning workspace files, then LLM judge.
+                best_file_content: Optional[str] = None
                 try:
                     expected = TreeSimilarity.parse(scoring.expected_tree)
                     actual = TreeSimilarity.parse(trace.final_output)
@@ -53,9 +57,36 @@ class L1Scorer:
                 except Exception:
                     l1_score = 0.0
 
+                # Fallback: scan workspace for JSON files created by the agent
+                if l1_score == 0.0 and working_dir:
+                    try:
+                        ws = Path(working_dir)
+                        if ws.exists():
+                            best_score = 0.0
+                            for fp in ws.rglob("*.json"):
+                                try:
+                                    content = fp.read_text(encoding="utf-8")
+                                    actual = TreeSimilarity.parse(content)
+                                    score = TreeSimilarity.compare(actual, expected)
+                                    if score > best_score:
+                                        best_score = score
+                                        best_file_content = content
+                                except Exception:
+                                    continue
+                            if best_score > l1_score:
+                                l1_score = best_score
+                    except Exception:
+                        pass
+
                 if l1_score == 0.0 and self._judge:
+                    # Pass the discovered file content to the judge,
+                    # not just trace.final_output (which is thought text).
+                    deliverables = (
+                        best_file_content
+                        or _collect_workspace_files(working_dir, trace.final_output)
+                    )
                     result = self._judge.score(
-                        item, trace, trace.final_output
+                        item, trace, deliverables
                     )
                     judge_cards = result.judge_score_cards
                     if judge_cards:
@@ -83,8 +114,10 @@ class L1Scorer:
                     )
 
                 if l1_score == 0.0 and self._judge:
+                    # Pass workspace file contents as deliverables if available
+                    deliverables = _collect_workspace_files(working_dir, trace.final_output)
                     result = self._judge.score(
-                        item, trace, trace.final_output
+                        item, trace, deliverables
                     )
                     judge_cards = result.judge_score_cards
                     if judge_cards:
@@ -121,3 +154,24 @@ class L1Scorer:
             run_id=trace.run_id,
             error_message=error_msg,
         )
+
+
+def _collect_workspace_files(working_dir: str, fallback: str) -> str:
+    """Gather workspace files' contents for the LLM judge to evaluate."""
+    ws = Path(working_dir)
+    if not ws.exists():
+        return fallback
+    parts = []
+    for fp in sorted(ws.rglob("*")):
+        if not fp.is_file() or ".git" in str(fp) or "__pycache__" in str(fp):
+            continue
+        try:
+            content = fp.read_text(encoding="utf-8", errors="replace").strip()
+            if content:
+                rel = fp.relative_to(ws)
+                parts.append(f"--- {rel} ---\n{content[:2000]}")
+        except Exception:
+            pass
+    if parts:
+        return "\n\n".join(parts)
+    return fallback

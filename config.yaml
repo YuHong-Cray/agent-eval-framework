@@ -17,7 +17,7 @@ scoring:
   l1:
     pass_threshold: 0.85
   l2_l3:
-    judge_model: "deepseek-v4-flash"
+    judge_model: "deepseek-v4-pro"
     judge_api_base: "https://api.deepseek.com"
     judge_max_retries: 3
     # Set your API key here, or via EVAL_JUDGE_API_KEY / DEEPSEEK_API_KEY env var

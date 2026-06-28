@@ -25,7 +25,7 @@ class Config:
 
     def _load(self) -> None:
         if self._path.exists():
-            with open(self._path, "r") as f:
+            with open(self._path, "r", encoding="utf-8") as f:
                 self._data = yaml.safe_load(f) or {}
         # Env var overrides
         if db_url := os.getenv("EVAL_DATABASE_URL"):

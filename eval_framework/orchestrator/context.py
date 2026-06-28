@@ -10,6 +10,19 @@ from eval_framework.config import config
 from eval_framework.models import TestItem
 
 
+def _read_json_with_encoding(path: Path) -> dict:
+    """Read a JSON file, trying UTF-8 first then falling back to GBK.
+
+    On Chinese Windows some test-item metadata files are saved as GBK.
+    """
+    raw = path.read_bytes()
+    try:
+        text = raw.decode("utf-8")
+    except UnicodeDecodeError:
+        text = raw.decode("gbk")
+    return json.loads(text)
+
+
 class TestItemRegistry:
     """Loads and manages test items from the filesystem registry."""
 
@@ -23,8 +36,7 @@ class TestItemRegistry:
         if not self._path.exists():
             raise FileNotFoundError(f"Registry not found: {self._path}")
 
-        with open(self._path) as f:
-            registry = json.load(f)
+        registry = _read_json_with_encoding(self._path)
 
         items = []
         for entry in registry.get("items", []):
@@ -36,8 +48,7 @@ class TestItemRegistry:
                     f"Warning: skipping missing item {entry['id']} at {item_path}"
                 )
                 continue
-            with open(item_path) as f:
-                data = json.load(f)
+            data = _read_json_with_encoding(item_path)
             item = TestItem(**data)
             self._items[item.id] = item
             items.append(item)
@@ -108,8 +119,7 @@ class ContextPreparer:
 
     def _get_item_rel_path(self, item_id: str) -> str:
         """Reverse-lookup item path from registry."""
-        with open(self._registry._path) as f:
-            registry = json.load(f)
+        registry = _read_json_with_encoding(self._registry._path)
         for entry in registry["items"]:
             if entry["id"] == item_id:
                 return entry["path"]

@@ -87,10 +87,21 @@ def run(adapter: str, command: str, layer: str, count: int, seed: int):
     )
 
     if completed:
-        avg_score = sum(
-            r.l1_score or 0 for r in completed
-        ) / len(completed)
-        click.echo(f"Average L1 score: {avg_score:.3f}")
+        # Show both L1 and judge scores — L1 items use automated scoring,
+        # L2/L3 items use LLM-as-Judge (1-5 scale)
+        l1_scores = [r.l1_score for r in completed if r.l1_score is not None]
+        judge_scores = [
+            max(c.score for c in r.judge_score_cards) if r.judge_score_cards else None
+            for r in completed
+        ]
+        judge_scores = [s for s in judge_scores if s is not None]
+
+        if l1_scores:
+            avg_l1 = sum(l1_scores) / len(l1_scores)
+            click.echo(f"Average L1 score: {avg_l1:.3f}  ({len(l1_scores)}/{len(completed)} items)")
+        if judge_scores:
+            avg_judge = sum(judge_scores) / len(judge_scores)
+            click.echo(f"Average judge score: {avg_judge:.1f}/5  ({len(judge_scores)}/{len(completed)} items)")
 
     if skipped:
         for s in skipped:
@@ -125,10 +136,10 @@ def report(agent: str, output: str):
     if scores:
         lines.append("## Dimension Scores\n\n")
         lines.append(
-            "| Dimension | Combined | L1 Score | Judge (1-5) | Runs |\n"
+            "| Dimension | Combined (0-1) | L1 Score | Judge (1-5) | Runs |\n"
         )
         lines.append(
-            "|-----------|----------|----------|-------------|------|\n"
+            "|-----------|----------------|----------|-------------|------|\n"
         )
         for dim, data in sorted(scores.items()):
             score = f"{data['combined_score']:.3f}"
@@ -138,6 +149,15 @@ def report(agent: str, output: str):
                 f"| {dim} | {score} | {l1} | {judge} | "
                 f"{data['run_count']} |\n"
             )
+
+        # Overall score: average of all dimension combined_scores, ×10
+        all_scores = [data['combined_score'] for d, data in scores.items()]
+        if all_scores:
+            overall_raw = sum(all_scores) / len(all_scores)
+            overall_10 = overall_raw * 10.0
+            lines.append(f"\n## Overall Score\n\n")
+            lines.append(f"**{overall_10:.1f} / 10** — average across {len(all_scores)} dimensions\n")
+            lines.append(f"Raw average: {overall_raw:.3f} (0-1 scale)\n")
     else:
         lines.append("No results found.\n")
 

@@ -41,6 +41,24 @@ class CrayCodeAdapter(AgentAdapter):
         r'\[Cray\]\s*\[Permission\].*allowing\s+"(\w+)"', re.IGNORECASE
     )
 
+    # Map thought keywords to tool names (for verbose mode without permission logs)
+    _THOUGHT_TO_TOOL: dict[str, str] = {
+        "read": "Read",
+        "reading": "Read",
+        "write": "Write",
+        "writing": "Write",
+        "edit": "Edit",
+        "editing": "Edit",
+        "modify": "Edit",
+        "bash": "Bash",
+        "run ": "Bash",
+        "pytest": "Bash",
+        "execute": "Bash",
+        "grep": "Grep",
+        "search": "Grep",
+        "glob": "Glob",
+    }
+
     def __init__(
         self,
         command: str = "cray",
@@ -151,15 +169,54 @@ class CrayCodeAdapter(AgentAdapter):
     def _parse_verbose(self, output: str) -> list[ToolCallStep]:
         steps: list[ToolCallStep] = []
         now = datetime.now(timezone.utc)
+        seen_tools: set[str] = set()
+
+        # Strategy 1: Explicit permission/allow lines (cray -p default mode)
         for line in output.split("\n"):
             m = self.TOOL_ALLOW_PATTERN.search(line)
             if m:
+                name = m.group(1).capitalize()
+                seen_tools.add(name)
                 steps.append(ToolCallStep(
                     step_index=len(steps),
-                    tool_call=ToolCall(tool_name=m.group(1).capitalize(), params={}),
+                    tool_call=ToolCall(tool_name=name, params={}),
                     result={}, timestamp=now, duration_ms=0,
                 ))
-        return steps
+
+        # Strategy 2: Parse "Thought:" lines for tool intent keywords
+        if not steps:
+            for line in output.split("\n"):
+                thought_match = re.search(
+                    r"Thought:\s*(.*)", line, re.IGNORECASE
+                )
+                if not thought_match:
+                    continue
+                text = thought_match.group(1).lower()
+                for keyword, tool_name in self._THOUGHT_TO_TOOL.items():
+                    if keyword in text and tool_name not in seen_tools:
+                        seen_tools.add(tool_name)
+                        steps.append(ToolCallStep(
+                            step_index=len(steps),
+                            tool_call=ToolCall(tool_name=tool_name, params={}),
+                            result={}, timestamp=now, duration_ms=0,
+                        ))
+                        # Only one tool per thought turn
+                        break
+
+        # Strategy 3: Each "Running tools..." + turn = at least one tool call
+        if not steps:
+            running_count = output.count("Running tools")
+            turn_count = len(re.findall(r"\[Cray\]\s*\[Turn\s+\d+\]", output))
+            tool_count = max(running_count, turn_count // 2)
+            if tool_count > 0:
+                for i in range(min(tool_count, 20)):
+                    steps.append(ToolCallStep(
+                        step_index=i,
+                        tool_call=ToolCall(tool_name="Bash", params={}),
+                        result={}, timestamp=now, duration_ms=0,
+                    ))
+
+        return steps[:100]
 
     @staticmethod
     def _extract_final_output(output: str) -> str:

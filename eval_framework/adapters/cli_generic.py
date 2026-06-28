@@ -46,6 +46,8 @@ class CLIAdapter(AgentAdapter):
             input=prompt,
             capture_output=True,
             text=True,
+            encoding="utf-8",
+            errors="replace",
             shell=self._use_shell,
             cwd=context.working_dir,
             env=merged_env,
